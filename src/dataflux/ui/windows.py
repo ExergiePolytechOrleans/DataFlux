@@ -7,8 +7,8 @@ import dataflux.callbacks.menu
 import dataflux.callbacks.serial
 
 from dataflux.state import AppState
-from dataflux.tags import MENU_FILE_CONNECT, MENU_FILE_DISCONNECT, STATUS_SERIAL_STATUS_BOX, STATUS_SERIAL_STATUS_TEXT, THEME_STATUS_CONNECTED, THEME_STATUS_DISCONNECTED, WINDOW_CONNECTION_MENU, WINDOW_CONNECTION_MENU_COMBO
-from dataflux.ui.colors import STATUS_GREEN_DARK, STATUS_RED_DARK
+from dataflux.tags import MENU_FILE_CONNECT, MENU_FILE_DISCONNECT, STATUS_SERIAL_STATUS_BOX, STATUS_SERIAL_STATUS_TEXT, THEME_STATUS_CONNECTED, THEME_STATUS_CONNECTED_BRIGHT, THEME_STATUS_DISCONNECTED, WINDOW_CONNECTION_MENU, WINDOW_CONNECTION_MENU_COMBO
+from dataflux.ui.colors import STATUS_GREEN_BRIGHT, STATUS_GREEN_DARK, STATUS_RED_DARK
 
 def build_windows(state: AppState) -> None:
     
@@ -43,6 +43,10 @@ def build_windows(state: AppState) -> None:
         with dpg.theme(tag=THEME_STATUS_CONNECTED):
             with dpg.theme_component(dpg.mvChildWindow):
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, STATUS_GREEN_DARK)
+
+        with dpg.theme(tag=THEME_STATUS_CONNECTED_BRIGHT):
+            with dpg.theme_component(dpg.mvChildWindow):
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, STATUS_GREEN_BRIGHT)
 
         with dpg.theme(tag=THEME_STATUS_DISCONNECTED):
             with dpg.theme_component(dpg.mvChildWindow):

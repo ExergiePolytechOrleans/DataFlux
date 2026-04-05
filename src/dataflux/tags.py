@@ -12,3 +12,4 @@ STATUS_SERIAL_STATUS_TEXT: str = "status_serial_status_text"
 
 THEME_STATUS_DISCONNECTED: str = "theme_status_disconnected"
 THEME_STATUS_CONNECTED: str = "theme_status_connected"
+THEME_STATUS_CONNECTED_BRIGHT: str = "theme_status_connected_bigght"
