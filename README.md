@@ -13,9 +13,3 @@ Finally run the app
 ```
 uv run dataflux
 ```
-```
-```
-```
-```
-```
-```
