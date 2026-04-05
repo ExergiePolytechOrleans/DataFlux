@@ -1,10 +1,26 @@
 [project]
 name = "dataflux"
 version = "0.1.0"
-description = "Add your description here"
+description = "Telemetry dashboard for Exergie vehicle data"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "dearpygui>=2.2",
     "pyserial>=3.5",
 ]
+
+[project.scripts]
+dataflux = "dataflux.app:run"
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
