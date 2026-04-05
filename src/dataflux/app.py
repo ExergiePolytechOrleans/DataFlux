@@ -19,7 +19,7 @@ def run() -> None:
         app_font = dpg.add_font("./Inter-Regular.ttf", 18)
     dpg.bind_font(app_font)
 
-    dataflux.ui.windows.build_windows()
+    dataflux.ui.windows.build_windows(state)
 
     dpg.setup_dearpygui()
     dpg.show_viewport()
