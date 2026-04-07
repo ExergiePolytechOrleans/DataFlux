@@ -2,10 +2,13 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from threading import Thread
 import dearpygui.dearpygui as dpg
 
 from dataflux.state import AppState
 import dataflux.ui.windows
+import dataflux.ui.worker
+import dataflux.services.telemetry
 
 def run() -> None:
     state: AppState = AppState()
@@ -29,6 +32,13 @@ def run() -> None:
     vp_h = dpg.get_viewport_client_height()
     dpg.configure_item("main_window", pos=(0, 0), width=vp_w, height=vp_h)
     dpg.set_primary_window("main_window", True)
+
+    state.ui_worker_thread = Thread(target=dataflux.ui.worker.ui_worker, args=(state,), daemon=True)
+    state.ui_worker_thread.start()
+
+    state.telemetry_thread_running = True
+    state.telemetry_thread = Thread(target=dataflux.services.telemetry.telemetry_worker, args=(state, ), daemon=True)
+    state.telemetry_thread.start()
 
     dpg.start_dearpygui()
 

@@ -7,8 +7,17 @@ import dataflux.callbacks.menu
 import dataflux.callbacks.serial
 
 from dataflux.state import AppState
-from dataflux.tags import MENU_FILE_CONNECT, MENU_FILE_DISCONNECT, STATUS_SERIAL_STATUS_BOX, STATUS_SERIAL_STATUS_TEXT, THEME_STATUS_CONNECTED, THEME_STATUS_CONNECTED_BRIGHT, THEME_STATUS_DISCONNECTED, WINDOW_CONNECTION_MENU, WINDOW_CONNECTION_MENU_COMBO
+from dataflux.tags import GRAPH_SERIES_SPEED, GRAPH_SERIES_TENG, GRAPH_SERIES_VBAT, GRAPH_X_AXIS_SPEED, GRAPH_X_AXIS_TENG, GRAPH_X_AXIS_VBAT, GRAPH_Y_AXIS_SPEED, GRAPH_Y_AXIS_TENG, GRAPH_Y_AXIS_VBAT, LIVE_DATA_TENG_VALUE, LIVE_DATA_UTC_TIME_VALUE, LIVE_DATA_VBAT_VALUE, LIVE_DATA_VEHICLE_TIME_VALUE, LIVE_DATA_SPEED_VALUE, MENU_FILE_CONNECT, MENU_FILE_DISCONNECT, MENU_FILE_DUMP_BUFFERS, STATUS_SERIAL_STATUS_BOX, STATUS_SERIAL_STATUS_TEXT, THEME_STATUS_CONNECTED, THEME_STATUS_CONNECTED_BRIGHT, THEME_STATUS_DISCONNECTED, WINDOW_CONNECTION_MENU, WINDOW_CONNECTION_MENU_COMBO, WINDOW_FILE_DIALOG_DUMP_BUFFERS
 from dataflux.ui.colors import STATUS_GREEN_BRIGHT, STATUS_GREEN_DARK, STATUS_RED_DARK
+
+def _add_live_data_row(label: str, value: str, tag: str, units: str) -> None:
+    with dpg.table_row():
+        with dpg.table_cell():
+            dpg.add_text(label)
+        with dpg.table_cell():
+            dpg.add_text(value, tag=tag)
+        with dpg.table_cell():
+            dpg.add_text(units)
 
 def build_windows(state: AppState) -> None:
     
@@ -17,6 +26,7 @@ def build_windows(state: AppState) -> None:
             with dpg.menu(label='File'):
                 dpg.add_menu_item(label="Connect", enabled=True, tag=MENU_FILE_CONNECT, callback=dataflux.callbacks.menu.open_connection_window)
                 dpg.add_menu_item(label="Disonnect", enabled=False, tag=MENU_FILE_DISCONNECT, callback=dataflux.callbacks.menu.menu_file_disconnect, user_data=state)
+                dpg.add_menu_item(label="Dump Buffers", enabled=True, tag=MENU_FILE_DUMP_BUFFERS, callback=dataflux.callbacks.menu.menu_file_dump_buffers)
                 dpg.add_menu_item(label="Quit")
             with dpg.menu(label='Window'):
                 dpg.add_menu_item(label="Live Data", user_data="page_live_data")
@@ -25,16 +35,39 @@ def build_windows(state: AppState) -> None:
         with dpg.child_window(tag="content_area", autosize_x=True, height=-32, border=False):
             with dpg.group(tag="page_live_data", show=True):
                 with dpg.group(horizontal=True):
-                    with dpg.child_window(tag="realtime_stats", width=250, autosize_y=True, border=True):
-                        dpg.add_text("Speed: 25kmh")
+                    with dpg.child_window(tag="realtime_stats", width=260, autosize_y=True, border=True):
+                        with dpg.table(header_row=False, resizable=False, policy=dpg.mvTable_SizingFixedFit, borders_innerH=False, borders_innerV=False, borders_outerH=False, borders_outerV=False, no_host_extendX=True):
+                            dpg.add_table_column(width_fixed=True)
+                            dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
+                            dpg.add_table_column(width_fixed=True)
+                            _add_live_data_row("UTC Time", "no_data", LIVE_DATA_UTC_TIME_VALUE,"")
+                            _add_live_data_row("Vehicle Time", "no_data", LIVE_DATA_VEHICLE_TIME_VALUE,"")
+                            _add_live_data_row("Speed", "no_data", LIVE_DATA_SPEED_VALUE,"km/h")
+                            _add_live_data_row("Battery Voltage", "no_data", LIVE_DATA_VBAT_VALUE,"V")
+                            _add_live_data_row("Engine Temp", "no_data", LIVE_DATA_TENG_VALUE,"°C")
 
                     with dpg.child_window(tag="data_graphs", autosize_x=True, autosize_y=True, border=True):
                         with dpg.plot(label="Speed", height=250, width=-1, no_inputs=True):
                             dpg.add_plot_legend()
-                            dpg.add_plot_axis(dpg.mvXAxis, label="Time", tag="x_axis_speed")
-                            y_axis = dpg.add_plot_axis(dpg.mvYAxis, label="Speed", tag="y_axis_speed")
-                            dpg.set_axis_limits("y_axis_speed", 0, 50)
-                            dpg.add_line_series([], [], parent=y_axis, tag="speed_series")
+                            dpg.add_plot_axis(dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_SPEED)
+                            y_axis_speed = dpg.add_plot_axis(dpg.mvYAxis, label="Speed", tag=GRAPH_Y_AXIS_SPEED)
+                            dpg.set_axis_limits(GRAPH_Y_AXIS_SPEED, ymin=0, ymax=50)
+                            dpg.set_axis_limits(GRAPH_X_AXIS_SPEED, ymin=-30, ymax=0)
+                            dpg.add_line_series([], [], parent=y_axis_speed, tag=GRAPH_SERIES_SPEED)
+                        with dpg.plot(label="Battery Voltage", height=250, width=-1, no_inputs=True):
+                            dpg.add_plot_legend()
+                            dpg.add_plot_axis(dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_VBAT)
+                            y_axis_vbat = dpg.add_plot_axis(dpg.mvYAxis, label="Voltage", tag=GRAPH_Y_AXIS_VBAT)
+                            dpg.set_axis_limits(GRAPH_Y_AXIS_VBAT, ymin=0, ymax=20)
+                            dpg.set_axis_limits(GRAPH_X_AXIS_VBAT, ymin=-30, ymax=0)
+                            dpg.add_line_series([], [], parent=y_axis_vbat, tag=GRAPH_SERIES_VBAT)
+                        with dpg.plot(label="Engine Temp", height=250, width=-1, no_inputs=True):
+                            dpg.add_plot_legend()
+                            dpg.add_plot_axis(dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_TENG)
+                            y_axis_teng = dpg.add_plot_axis(dpg.mvYAxis, label="Temperature", tag=GRAPH_Y_AXIS_TENG)
+                            dpg.set_axis_limits(GRAPH_Y_AXIS_TENG, ymin=0, ymax=120)
+                            dpg.set_axis_limits(GRAPH_X_AXIS_TENG, ymin=-30, ymax=0)
+                            dpg.add_line_series([], [], parent=y_axis_teng, tag=GRAPH_SERIES_TENG)
 
             with dpg.group(tag="page_lap_recap", show=False):
                 dpg.add_text("Lap Recap")
@@ -74,3 +107,15 @@ def build_windows(state: AppState) -> None:
     with dpg.window(label="Connection Menu", tag=WINDOW_CONNECTION_MENU, show=False, modal=True, no_collapse=True, width=300):
         dpg.add_combo([], tag=WINDOW_CONNECTION_MENU_COMBO)
         dpg.add_button(label="Connect", callback=dataflux.callbacks.serial.connection_window_connect_serial, user_data=state)
+
+    with dpg.file_dialog(
+        directory_selector=False,
+        show=False,
+        tag=WINDOW_FILE_DIALOG_DUMP_BUFFERS,
+        width=700,
+        height=400,
+        modal=True,
+        callback=dataflux.callbacks.menu.window_file_dialog_dump_buffers_ok,
+        user_data=state
+    ):
+        dpg.add_file_extension(".csv")

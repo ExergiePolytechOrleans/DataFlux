@@ -10,6 +10,7 @@ import serial.tools.list_ports
 from dataflux import telemetry_common
 import dataflux.telemetry_common.telemetry_common
 import dataflux.ui.routines.status
+import dataflux.ui.routines
 
 from dataflux.state import AppState
 
@@ -58,6 +59,9 @@ def serial_reader_worker(state: AppState) -> None:
         port = state.serial_port
         if port is None:
             break
+        if port.closed:
+            print("Port closed")
+            break
 
         try:
             packet = read_one_uart_packet(port)
@@ -68,10 +72,13 @@ def serial_reader_worker(state: AppState) -> None:
             if parsed is not None:
                 state.packet_queue.put(parsed)
                 state.serial_status_queue.put(0.1)
-                print(parsed)
 
         except Exception as e:
             print(f"Serial parser error: {e}")
+            break
+    disconnect_serial(state)
+    dataflux.ui.routines.update_global_connection_status(state)
+    
 
 def read_one_uart_packet(port: Serial) -> bytes | None:
     first = port.read(1)
