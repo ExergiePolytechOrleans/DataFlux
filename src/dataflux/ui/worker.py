@@ -26,6 +26,10 @@ def ui_worker(state: AppState):
             last_datetime = formatted
         
         if state.serial_thread_running and state.telemetry_valid:
+            x_common: list[float] | None = None
+            speed_y: list[float] | None = None
+            vbat_y: list[float] | None = None
+            teng_y: list[float] | None = None
             with state.lock:
                 # Vehicle Time
                 no_data_written = False
@@ -33,14 +37,16 @@ def ui_worker(state: AppState):
                 veh_speed = state.latest_telemetry["speed"]
                 vbat = state.latest_telemetry["vbat"]
                 teng = state.latest_telemetry["teng"]
-                x_common = state.live_buffers.timestamp
-                speed_y = state.live_buffers.speed
-                vbat_y = state.live_buffers.vbat
-                teng_y = state.live_buffers.teng
+                if state.live_buffers_updated:
+                    x_common = list(state.live_buffers.timestamp)
+                    speed_y = list(state.live_buffers.speed)
+                    vbat_y = list(state.live_buffers.vbat)
+                    teng_y = list(state.live_buffers.teng)
+                    state.live_buffers_updated = False
 
-            hours = veh_time // 1000000
-            minutes = (veh_time // 10000) % 100
-            seconds = (veh_time // 100) % 100
+            hours = veh_time // 360000
+            minutes = (veh_time % 360000) // 6000
+            seconds = (veh_time % 6000) // 100
             formatted = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             if formatted != last_veh_time:
                 dpg.set_value(LIVE_DATA_VEHICLE_TIME_VALUE, formatted)
@@ -65,12 +71,10 @@ def ui_worker(state: AppState):
                 dpg.set_value(LIVE_DATA_TENG_VALUE, formatted)
                 last_teng = formatted
 
-            if state.live_buffers_updated:
+            if x_common is not None:
                 dpg.set_value(GRAPH_SERIES_SPEED, [x_common, speed_y])
                 dpg.set_value(GRAPH_SERIES_VBAT, [x_common, vbat_y])
                 dpg.set_value(GRAPH_SERIES_TENG, [x_common, teng_y])
-                with state.lock:
-                    state.live_buffers_updated = False
 
         else:
             if not no_data_written:

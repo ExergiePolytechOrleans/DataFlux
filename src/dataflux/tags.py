@@ -18,6 +18,12 @@ LIVE_DATA_SPEED_VALUE: str = "live_data_speed_value"
 LIVE_DATA_VBAT_VALUE: str = "live_data_vbat_value"
 LIVE_DATA_TENG_VALUE: str = "live_data_teng_value"
 
+PAGE_LIVE_DATA: str = "page_live_data"
+PAGE_LAP_RECAP: str = "page_lap_recap"
+
+SUB_PAGE_DATA_GRAPHS: str = "sub_page_data_graphs"
+SUB_PAGE_MAP: str = "sub_page_map"
+
 THEME_STATUS_DISCONNECTED: str = "theme_status_disconnected"
 THEME_STATUS_CONNECTED: str = "theme_status_connected"
 THEME_STATUS_CONNECTED_BRIGHT: str = "theme_status_connected_bigght"

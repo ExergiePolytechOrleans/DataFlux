@@ -27,3 +27,6 @@ def window_file_dialog_dump_buffers_ok(sender, app_data, user_data: AppState) ->
     user_data.buffer_dump_thread = Thread(target=dataflux.services.telemetry.buffer_dump, args=(user_data, app_data["file_path_name"]), daemon=True)
     user_data.buffer_dump_thread.start()
 
+def menu_window_select(sender, app_data, user_data: str) -> None:
+    dataflux.ui.routines.windows.toggle_window(user_data)
+

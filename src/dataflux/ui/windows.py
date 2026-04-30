@@ -7,7 +7,7 @@ import dataflux.callbacks.menu
 import dataflux.callbacks.serial
 
 from dataflux.state import AppState
-from dataflux.tags import GRAPH_SERIES_SPEED, GRAPH_SERIES_TENG, GRAPH_SERIES_VBAT, GRAPH_X_AXIS_SPEED, GRAPH_X_AXIS_TENG, GRAPH_X_AXIS_VBAT, GRAPH_Y_AXIS_SPEED, GRAPH_Y_AXIS_TENG, GRAPH_Y_AXIS_VBAT, LIVE_DATA_TENG_VALUE, LIVE_DATA_UTC_TIME_VALUE, LIVE_DATA_VBAT_VALUE, LIVE_DATA_VEHICLE_TIME_VALUE, LIVE_DATA_SPEED_VALUE, MENU_FILE_CONNECT, MENU_FILE_DISCONNECT, MENU_FILE_DUMP_BUFFERS, STATUS_SERIAL_STATUS_BOX, STATUS_SERIAL_STATUS_TEXT, THEME_STATUS_CONNECTED, THEME_STATUS_CONNECTED_BRIGHT, THEME_STATUS_DISCONNECTED, WINDOW_CONNECTION_MENU, WINDOW_CONNECTION_MENU_COMBO, WINDOW_FILE_DIALOG_DUMP_BUFFERS
+from dataflux.tags import GRAPH_SERIES_SPEED, GRAPH_SERIES_TENG, GRAPH_SERIES_VBAT, GRAPH_X_AXIS_SPEED, GRAPH_X_AXIS_TENG, GRAPH_X_AXIS_VBAT, GRAPH_Y_AXIS_SPEED, GRAPH_Y_AXIS_TENG, GRAPH_Y_AXIS_VBAT, LIVE_DATA_TENG_VALUE, LIVE_DATA_UTC_TIME_VALUE, LIVE_DATA_VBAT_VALUE, LIVE_DATA_VEHICLE_TIME_VALUE, LIVE_DATA_SPEED_VALUE, MENU_FILE_CONNECT, MENU_FILE_DISCONNECT, MENU_FILE_DUMP_BUFFERS, PAGE_LAP_RECAP, PAGE_LIVE_DATA, STATUS_SERIAL_STATUS_BOX, STATUS_SERIAL_STATUS_TEXT, SUB_PAGE_DATA_GRAPHS, SUB_PAGE_MAP, THEME_STATUS_CONNECTED, THEME_STATUS_CONNECTED_BRIGHT, THEME_STATUS_DISCONNECTED, WINDOW_CONNECTION_MENU, WINDOW_CONNECTION_MENU_COMBO, WINDOW_FILE_DIALOG_DUMP_BUFFERS
 from dataflux.ui.colors import STATUS_GREEN_BRIGHT, STATUS_GREEN_DARK, STATUS_RED_DARK
 
 def _add_live_data_row(label: str, value: str, tag: str, units: str) -> None:
@@ -29,11 +29,12 @@ def build_windows(state: AppState) -> None:
                 dpg.add_menu_item(label="Dump Buffers", enabled=True, tag=MENU_FILE_DUMP_BUFFERS, callback=dataflux.callbacks.menu.menu_file_dump_buffers)
                 dpg.add_menu_item(label="Quit")
             with dpg.menu(label='Window'):
-                dpg.add_menu_item(label="Live Data", user_data="page_live_data")
-                dpg.add_menu_item(label="Lap Recap", user_data="page_lap_recap")
+                dpg.add_menu_item(label="Live Graphs", user_data=SUB_PAGE_DATA_GRAPHS, callback=dataflux.callbacks.menu.menu_window_select)
+                dpg.add_menu_item(label="Live Map", user_data=SUB_PAGE_MAP, callback=dataflux.callbacks.menu.menu_window_select )
+                dpg.add_menu_item(label="Lap Recap", user_data=PAGE_LAP_RECAP, callback=dataflux.callbacks.menu.menu_window_select)
 
         with dpg.child_window(tag="content_area", autosize_x=True, height=-32, border=False):
-            with dpg.group(tag="page_live_data", show=True):
+            with dpg.group(tag=PAGE_LIVE_DATA, show=True):
                 with dpg.group(horizontal=True):
                     with dpg.child_window(tag="realtime_stats", width=260, autosize_y=True, border=True):
                         with dpg.table(header_row=False, resizable=False, policy=dpg.mvTable_SizingFixedFit, borders_innerH=False, borders_innerV=False, borders_outerH=False, borders_outerV=False, no_host_extendX=True):
@@ -46,7 +47,7 @@ def build_windows(state: AppState) -> None:
                             _add_live_data_row("Battery Voltage", "no_data", LIVE_DATA_VBAT_VALUE,"V")
                             _add_live_data_row("Engine Temp", "no_data", LIVE_DATA_TENG_VALUE,"°C")
 
-                    with dpg.child_window(tag="data_graphs", autosize_x=True, autosize_y=True, border=True):
+                    with dpg.child_window(tag=SUB_PAGE_DATA_GRAPHS, autosize_x=True, autosize_y=True, border=True, show=True):
                         with dpg.plot(label="Speed", height=250, width=-1, no_inputs=True):
                             dpg.add_plot_legend()
                             dpg.add_plot_axis(dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_SPEED)
@@ -69,7 +70,12 @@ def build_windows(state: AppState) -> None:
                             dpg.set_axis_limits(GRAPH_X_AXIS_TENG, ymin=-30, ymax=0)
                             dpg.add_line_series([], [], parent=y_axis_teng, tag=GRAPH_SERIES_TENG)
 
-            with dpg.group(tag="page_lap_recap", show=False):
+                    with dpg.child_window(tag=SUB_PAGE_MAP, autosize_x=True, autosize_y=True, border=True, show=False, no_scrollbar=True):
+                        with dpg.drawlist(width=500, height=500, tag="map_drawlist"):
+                            dpg.draw_image("texture_tab", (0, 0), (500, 500))
+                            dpg.draw_circle((0, 0), 10, color=(255, 0, 0, 255), fill=(255, 0, 0, 255))
+
+            with dpg.group(tag=PAGE_LAP_RECAP, show=False):
                 dpg.add_text("Lap Recap")
                 dpg.add_separator()
 

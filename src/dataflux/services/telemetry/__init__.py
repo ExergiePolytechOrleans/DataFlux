@@ -3,18 +3,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from queue import Empty
-from threading import local
 from dataflux.state import AppState, Buffers
 import time
 from pathlib import Path
 import csv
 
-def hhmmsscc_to_day_seconds(value: int) -> int:
-    hours = value // 1000000
-    minutes = (value // 10000) % 100
-    seconds = (value // 100) % 100
-
-    return (hours * 3600) + (minutes * 60) + seconds
+LIVE_BUFFER_WINDOW_CS = 30 * 100
 
 def telemetry_worker(state: AppState):
     while state.telemetry_thread_running:
@@ -32,7 +26,7 @@ def telemetry_worker(state: AppState):
 
 
         with state.lock:
-            state.raw_buffers.timestamp.append(hhmmsscc_to_day_seconds(dataframe["time_stamp"]))
+            state.raw_buffers.timestamp.append(dataframe["time_stamp"])
             state.raw_buffers.speed.append(dataframe["speed"])
             state.raw_buffers.vbat.append(dataframe["vbat"])
             state.raw_buffers.teng.append(dataframe["teng"])
@@ -51,12 +45,13 @@ def telemetry_worker(state: AppState):
                 return
 
             last_timestamp = state.raw_buffers.timestamp[-1]
-            cutoff = last_timestamp - 30
+            cutoff = last_timestamp - LIVE_BUFFER_WINDOW_CS
 
             i = len(state.raw_buffers.timestamp) - 1
 
             while i >= 0 and state.raw_buffers.timestamp[i] >= cutoff:
-                state.live_buffers.timestamp.append(state.raw_buffers.timestamp[i] - last_timestamp)
+                elapsed_seconds = (state.raw_buffers.timestamp[i] - last_timestamp) / 100.0
+                state.live_buffers.timestamp.append(elapsed_seconds)
                 state.live_buffers.speed.append(state.raw_buffers.speed[i])
                 state.live_buffers.vbat.append(state.raw_buffers.vbat[i])
                 state.live_buffers.teng.append(state.raw_buffers.teng[i])
@@ -72,7 +67,6 @@ def telemetry_worker(state: AppState):
             state.live_buffers.lng.reverse()
 
 def buffer_dump(state: AppState, path: str):
-    print(path)
     save_path = Path(path) 
     if save_path.is_dir():
         save_path = save_path / "output.csv"
@@ -87,8 +81,6 @@ def buffer_dump(state: AppState, path: str):
             lng=list(state.raw_buffers.lng),
         )
 
-    print(local_raw_buffers.timestamp)
-
     with save_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
 
@@ -98,6 +90,5 @@ def buffer_dump(state: AppState, path: str):
             writer.writerow(row)
 
     state.buffer_dump_thread = None
-
 
 

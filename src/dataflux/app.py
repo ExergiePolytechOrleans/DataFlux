@@ -6,6 +6,7 @@ from threading import Thread
 import dearpygui.dearpygui as dpg
 
 from dataflux.state import AppState
+import dataflux.config
 import dataflux.ui.windows
 import dataflux.ui.worker
 import dataflux.services.telemetry
@@ -15,6 +16,14 @@ def run() -> None:
 
     # Create application context and viewport
     dpg.create_context()
+
+    width, height, channels, data = dpg.load_image("map.png")
+    dataflux.config.MAP_IMAGE_WIDTH = width
+    dataflux.config.MAP_IMAGE_HEIGHT = height
+
+    with dpg.texture_registry(show=False):
+        dpg.add_static_texture(width=width, height=height, default_value=data, tag="texture_tab")
+
     dpg.create_viewport(title='DataFlux', width=600, height=600)
 
     # Add Inter font to registry and bind as main app font
@@ -45,6 +54,5 @@ def run() -> None:
     dpg.destroy_context()
 
     
-
 
 

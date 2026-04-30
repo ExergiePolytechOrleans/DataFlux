@@ -1,0 +1,2 @@
+MAP_IMAGE_WIDTH: int = 1
+MAP_IMAGE_HEIGHT: int = 1
