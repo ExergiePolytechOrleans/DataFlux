@@ -28,7 +28,7 @@ def run() -> None:
 
     # Add Inter font to registry and bind as main app font
     with dpg.font_registry():
-        app_font = dpg.add_font("./Inter-Regular.ttf", 18*2)
+        app_font = dpg.add_font("assets/fonts/Inter-Regular.ttf", 18*2)
     dpg.bind_font(app_font)
 
     dataflux.ui.windows.build_windows(state)
