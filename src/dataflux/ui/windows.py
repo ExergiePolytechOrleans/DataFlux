@@ -22,6 +22,7 @@ def _add_live_data_row(label: str, value: str, tag: str, units: str) -> None:
 def build_windows(state: AppState) -> None:
     
     with dpg.window(label='DataFlux',tag="main_window", no_collapse=True):
+        dpg.set_global_font_scale(0.5)
         with dpg.menu_bar():
             with dpg.menu(label='File'):
                 dpg.add_menu_item(label="Connect", enabled=True, tag=MENU_FILE_CONNECT, callback=dataflux.callbacks.menu.open_connection_window)
