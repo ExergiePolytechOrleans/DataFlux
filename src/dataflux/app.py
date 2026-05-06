@@ -2,6 +2,8 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from pathlib import Path
+import sys
 from threading import Thread
 import dearpygui.dearpygui as dpg
 
@@ -11,13 +13,39 @@ import dataflux.ui.windows
 import dataflux.ui.worker
 import dataflux.services.telemetry
 
+
+def _asset_path(relative_path: str) -> str:
+    path = Path(relative_path)
+    candidates: list[Path] = []
+
+    bundle_dir = getattr(sys, "_MEIPASS", None)
+    if bundle_dir is not None:
+        candidates.append(Path(bundle_dir) / path)
+
+    candidates.extend((
+        Path.cwd() / path,
+        Path(__file__).resolve().parents[2] / path,
+    ))
+
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+
+    searched = ", ".join(str(candidate) for candidate in candidates)
+    raise FileNotFoundError(f"Missing asset {relative_path!r}. Searched: {searched}")
+
+
 def run() -> None:
     state: AppState = AppState()
 
     # Create application context and viewport
     dpg.create_context()
 
-    width, height, channels, data = dpg.load_image("map.png")
+    map_path = _asset_path("assets/images/map.png")
+    map_image = dpg.load_image(map_path)
+    if map_image is None:
+        raise RuntimeError(f"Failed to load map image: {map_path}")
+    width, height, channels, data = map_image
     dataflux.config.MAP_IMAGE_WIDTH = width
     dataflux.config.MAP_IMAGE_HEIGHT = height
 
@@ -28,7 +56,7 @@ def run() -> None:
 
     # Add Inter font to registry and bind as main app font
     with dpg.font_registry():
-        app_font = dpg.add_font("assets/fonts/Inter-Regular.ttf", 18*2)
+        app_font = dpg.add_font(_asset_path("assets/fonts/Inter-Regular.ttf"), 18*2)
     dpg.bind_font(app_font)
 
     dataflux.ui.windows.build_windows(state)
@@ -54,5 +82,4 @@ def run() -> None:
     dpg.destroy_context()
 
     
-
 
