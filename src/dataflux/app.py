@@ -22,17 +22,20 @@ def _asset_path(relative_path: str) -> str:
     if bundle_dir is not None:
         candidates.append(Path(bundle_dir) / path)
 
-    candidates.extend((
-        Path.cwd() / path,
-        Path(__file__).resolve().parents[2] / path,
-    ))
+    candidates.extend(
+        (
+            Path.cwd() / path,
+            Path(__file__).resolve().parents[2] / path,
+        )
+    )
 
     for candidate in candidates:
         if candidate.exists():
             return str(candidate)
 
     searched = ", ".join(str(candidate) for candidate in candidates)
-    raise FileNotFoundError(f"Missing asset {relative_path!r}. Searched: {searched}")
+    raise FileNotFoundError(
+        f"Missing asset {relative_path!r}. Searched: {searched}")
 
 
 def run() -> None:
@@ -50,13 +53,16 @@ def run() -> None:
     dataflux.config.MAP_IMAGE_HEIGHT = height
 
     with dpg.texture_registry(show=False):
-        dpg.add_static_texture(width=width, height=height, default_value=data, tag="texture_tab")
+        dpg.add_static_texture(
+            width=width, height=height, default_value=data, tag="texture_tab"
+        )
 
-    dpg.create_viewport(title='DataFlux', width=600, height=600)
+    dpg.create_viewport(title="DataFlux", width=600, height=600)
 
     # Add Inter font to registry and bind as main app font
     with dpg.font_registry():
-        app_font = dpg.add_font(_asset_path("assets/fonts/Inter-Regular.ttf"), 18*2)
+        app_font = dpg.add_font(_asset_path(
+            "assets/fonts/Inter-Regular.ttf"), 18 * 2)
     dpg.bind_font(app_font)
 
     dataflux.ui.windows.build_windows(state)
@@ -64,22 +70,23 @@ def run() -> None:
     dpg.setup_dearpygui()
     dpg.show_viewport()
 
-
     vp_w = dpg.get_viewport_client_width()
     vp_h = dpg.get_viewport_client_height()
     dpg.configure_item("main_window", pos=(0, 0), width=vp_w, height=vp_h)
     dpg.set_primary_window("main_window", True)
 
-    state.ui_worker_thread = Thread(target=dataflux.ui.worker.ui_worker, args=(state,), daemon=True)
+    state.ui_worker_thread = Thread(
+        target=dataflux.ui.worker.ui_worker, args=(state,), daemon=True
+    )
     state.ui_worker_thread.start()
 
     state.telemetry_thread_running = True
-    state.telemetry_thread = Thread(target=dataflux.services.telemetry.telemetry_worker, args=(state, ), daemon=True)
+    state.telemetry_thread = Thread(
+        target=dataflux.services.telemetry.telemetry_worker, args=(
+            state,), daemon=True
+    )
     state.telemetry_thread.start()
 
     dpg.start_dearpygui()
 
     dpg.destroy_context()
-
-    
-
