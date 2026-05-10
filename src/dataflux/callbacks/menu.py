@@ -11,7 +11,13 @@ import dataflux.ui.routines.status
 import dataflux.services.serial
 import dataflux.services.telemetry
 
-from dataflux.tags import WINDOW_CONNECTION_MENU, WINDOW_FILE_DIALOG_DUMP_BUFFERS
+from dataflux.tags import (
+    GRAPH_X_AXIS_SPEED,
+    GRAPH_X_AXIS_TENG,
+    GRAPH_X_AXIS_VBAT,
+    WINDOW_CONNECTION_MENU,
+    WINDOW_FILE_DIALOG_DUMP_BUFFERS,
+)
 
 
 def open_connection_window(sender, app_data, user_data) -> None:
@@ -39,3 +45,11 @@ def window_file_dialog_dump_buffers_ok(sender, app_data, user_data: AppState) ->
 
 def menu_window_select(sender, app_data, user_data: str) -> None:
     dataflux.ui.routines.windows.toggle_window(user_data)
+
+
+def menu_data_timeframe(sender, app_data, user_data: tuple[AppState, int]) -> None:
+    app_state, timeframe = user_data
+    app_state.live_buffer_len = timeframe
+    dpg.set_axis_limits(GRAPH_X_AXIS_SPEED, ymin=-(timeframe), ymax=0)
+    dpg.set_axis_limits(GRAPH_X_AXIS_VBAT, ymin=-(timeframe), ymax=0)
+    dpg.set_axis_limits(GRAPH_X_AXIS_TENG, ymin=-(timeframe), ymax=0)

@@ -8,11 +8,10 @@ import time
 from pathlib import Path
 import csv
 
-LIVE_BUFFER_WINDOW_CS = 30 * 100
 
 def telemetry_worker(state: AppState):
     while state.telemetry_thread_running:
-        if state.serial_thread_running == False:
+        if not state.serial_thread_running:
             time.sleep(1)
             continue
         try:
@@ -22,8 +21,6 @@ def telemetry_worker(state: AppState):
 
         state.latest_telemetry = dataframe
         state.telemetry_valid = True
-
-
 
         with state.lock:
             state.raw_buffers.timestamp.append(dataframe["time_stamp"])
@@ -45,12 +42,14 @@ def telemetry_worker(state: AppState):
                 return
 
             last_timestamp = state.raw_buffers.timestamp[-1]
-            cutoff = last_timestamp - LIVE_BUFFER_WINDOW_CS
+            cutoff = last_timestamp - (state.live_buffer_len * 100)
 
             i = len(state.raw_buffers.timestamp) - 1
 
             while i >= 0 and state.raw_buffers.timestamp[i] >= cutoff:
-                elapsed_seconds = (state.raw_buffers.timestamp[i] - last_timestamp) / 100.0
+                elapsed_seconds = (
+                    state.raw_buffers.timestamp[i] - last_timestamp
+                ) / 100.0
                 state.live_buffers.timestamp.append(elapsed_seconds)
                 state.live_buffers.speed.append(state.raw_buffers.speed[i])
                 state.live_buffers.vbat.append(state.raw_buffers.vbat[i])
@@ -66,8 +65,9 @@ def telemetry_worker(state: AppState):
             state.live_buffers.lat.reverse()
             state.live_buffers.lng.reverse()
 
+
 def buffer_dump(state: AppState, path: str):
-    save_path = Path(path) 
+    save_path = Path(path)
     if save_path.is_dir():
         save_path = save_path / "output.csv"
 
@@ -86,9 +86,14 @@ def buffer_dump(state: AppState, path: str):
 
         writer.writerow(["timestamp", "speed", "vbat", "teng", "lat", "lng"])
 
-        for row in zip(local_raw_buffers.timestamp, local_raw_buffers.speed, local_raw_buffers.vbat, local_raw_buffers.teng, local_raw_buffers.lat, local_raw_buffers.lng):
+        for row in zip(
+            local_raw_buffers.timestamp,
+            local_raw_buffers.speed,
+            local_raw_buffers.vbat,
+            local_raw_buffers.teng,
+            local_raw_buffers.lat,
+            local_raw_buffers.lng,
+        ):
             writer.writerow(row)
 
     state.buffer_dump_thread = None
-
-

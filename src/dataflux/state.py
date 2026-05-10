@@ -7,6 +7,7 @@ from threading import Lock, Thread
 from serial import Serial
 from queue import Queue
 
+
 @dataclass
 class Buffers:
     timestamp: list[int] = field(default_factory=list)
@@ -15,6 +16,7 @@ class Buffers:
     teng: list[float] = field(default_factory=list)
     lat: list[float] = field(default_factory=list)
     lng: list[float] = field(default_factory=list)
+
 
 @dataclass
 class AppState:
@@ -39,6 +41,7 @@ class AppState:
     raw_buffers: Buffers = field(default_factory=Buffers)
     live_buffers: Buffers = field(default_factory=Buffers)
     live_buffers_updated: bool = False
+    live_buffer_len: int = 30
 
     buffer_dump_thread: Thread | None = None
 

@@ -95,8 +95,46 @@ def build_windows(state: AppState) -> None:
                 )
             with dpg.menu(label="Data"):
                 with dpg.menu(label="Timeframe"):
-                    dpg.add_menu_item(label="30s")
-                    dpg.add_menu_item(label="60s")
+                    dpg.add_menu_item(
+                        label="30s",
+                        user_data=(state, 30),
+                        callback=dataflux.callbacks.menu.menu_data_timeframe,
+                    )
+                    dpg.add_menu_item(
+                        label="60s",
+                        user_data=(state, 60),
+                        callback=dataflux.callbacks.menu.menu_data_timeframe,
+                    )
+                    dpg.add_menu_item(
+                        label="5m",
+                        user_data=(state, 60 * 5),
+                        callback=dataflux.callbacks.menu.menu_data_timeframe,
+                    )
+                    dpg.add_menu_item(
+                        label="10m",
+                        user_data=(state, 60 * 10),
+                        callback=dataflux.callbacks.menu.menu_data_timeframe,
+                    )
+                    dpg.add_menu_item(
+                        label="15m",
+                        user_data=(state, 60 * 15),
+                        callback=dataflux.callbacks.menu.menu_data_timeframe,
+                    )
+                    dpg.add_menu_item(
+                        label="30m",
+                        user_data=(state, 60 * 30),
+                        callback=dataflux.callbacks.menu.menu_data_timeframe,
+                    )
+                    dpg.add_menu_item(
+                        label="1h",
+                        user_data=(state, 60 * 60),
+                        callback=dataflux.callbacks.menu.menu_data_timeframe,
+                    )
+                    dpg.add_menu_item(
+                        label="2h",
+                        user_data=(state, 60 * 120),
+                        callback=dataflux.callbacks.menu.menu_data_timeframe,
+                    )
 
         with dpg.child_window(
             tag="content_area", autosize_x=True, height=-32, border=False
