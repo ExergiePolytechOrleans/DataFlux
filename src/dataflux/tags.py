@@ -2,13 +2,19 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-MENU_FILE_CONNECT: str = "menu_file_connect"
-MENU_FILE_DISCONNECT: str = "menu_file_disconnect"
+MENU_IO_CONNECT_LORA: str = "menu_io_connect_lora"
+MENU_IO_CONNECT_SERIAL: str = "menu_io_connect_serial"
+MENU_IO_DISCONNECT_LORA: str = "menu_io_disconnect_lora"
+MENU_IO_DISCONNECT_SERIAL: str = "menu_io_disconnect_serial"
 MENU_FILE_DUMP_BUFFERS: str = "menu_file_dump_buffers"
-WINDOW_CONNECTION_MENU: str = "window_connection_menu"
-WINDOW_CONNECTION_MENU_COMBO: str = "window_connection_menu_combo"
+WINDOW_LORA_CONNECTION_MENU: str = "window_lora_connection_menu"
+WINDOW_SERIAL_CONNECTION_MENU: str = "window_serial_connection_menu"
+WINDOW_LORA_CONNECTION_MENU_COMBO: str = "window_lora_connection_menu_combo"
+WINDOW_SERIAL_CONNECTION_MENU_COMBO: str = "window_serial_connection_menu_combo"
 WINDOW_FILE_DIALOG_DUMP_BUFFERS: str = "window_file_dialog_dump_buffers"
 
+STATUS_LORA_STATUS_BOX: str = "status_lora_status_box"
+STATUS_LORA_STATUS_TEXT: str = "status_lora_status_text"
 STATUS_SERIAL_STATUS_BOX: str = "status_serial_status_box"
 STATUS_SERIAL_STATUS_TEXT: str = "status_serial_status_text"
 
@@ -20,6 +26,9 @@ LIVE_DATA_TENG_VALUE: str = "live_data_teng_value"
 
 PAGE_LIVE_DATA: str = "page_live_data"
 PAGE_LAP_RECAP: str = "page_lap_recap"
+PAGE_SERIAL_CONSOLE: str = "page_serial_console"
+
+TEXT_SERIAL_CONSOLE: str = "text_serial_console"
 
 SUB_PAGE_DATA_GRAPHS: str = "sub_page_data_graphs"
 SUB_PAGE_MAP: str = "sub_page_map"

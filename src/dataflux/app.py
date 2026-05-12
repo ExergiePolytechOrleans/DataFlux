@@ -9,6 +9,7 @@ import dearpygui.dearpygui as dpg
 
 from dataflux.state import AppState
 import dataflux.config
+from dataflux.tags import TEXT_SERIAL_CONSOLE
 import dataflux.ui.windows
 import dataflux.ui.worker
 import dataflux.services.telemetry
@@ -34,8 +35,7 @@ def _asset_path(relative_path: str) -> str:
             return str(candidate)
 
     searched = ", ".join(str(candidate) for candidate in candidates)
-    raise FileNotFoundError(
-        f"Missing asset {relative_path!r}. Searched: {searched}")
+    raise FileNotFoundError(f"Missing asset {relative_path!r}. Searched: {searched}")
 
 
 def run() -> None:
@@ -61,8 +61,12 @@ def run() -> None:
 
     # Add Inter font to registry and bind as main app font
     with dpg.font_registry():
-        app_font = dpg.add_font(_asset_path(
-            "assets/fonts/Inter-Regular.ttf"), 18 * 2)
+        app_font = dpg.add_font(_asset_path("assets/fonts/Inter-Regular.ttf"), 18 * 2)
+        mono_font = dpg.add_font(
+            _asset_path("assets/fonts/JetBrainsMono-Regular.ttf"),
+            size=36,
+            label="mono_font",
+        )
     dpg.bind_font(app_font)
 
     dataflux.ui.windows.build_windows(state)
@@ -74,6 +78,7 @@ def run() -> None:
     vp_h = dpg.get_viewport_client_height()
     dpg.configure_item("main_window", pos=(0, 0), width=vp_w, height=vp_h)
     dpg.set_primary_window("main_window", True)
+    dpg.bind_item_font(TEXT_SERIAL_CONSOLE, mono_font)
 
     state.ui_worker_thread = Thread(
         target=dataflux.ui.worker.ui_worker, args=(state,), daemon=True
@@ -82,8 +87,7 @@ def run() -> None:
 
     state.telemetry_thread_running = True
     state.telemetry_thread = Thread(
-        target=dataflux.services.telemetry.telemetry_worker, args=(
-            state,), daemon=True
+        target=dataflux.services.telemetry.telemetry_worker, args=(state,), daemon=True
     )
     state.telemetry_thread.start()
 

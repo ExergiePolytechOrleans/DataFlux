@@ -11,7 +11,7 @@ import csv
 
 def telemetry_worker(state: AppState):
     while state.telemetry_thread_running:
-        if not state.serial_thread_running:
+        if not state.lora_thread_running:
             time.sleep(1)
             continue
         try:

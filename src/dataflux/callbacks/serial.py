@@ -7,12 +7,23 @@ import dataflux.services.serial
 import dataflux.ui.routines
 
 from dataflux.state import AppState
-from dataflux.tags import WINDOW_CONNECTION_MENU, WINDOW_CONNECTION_MENU_COMBO
+from dataflux.tags import (
+    WINDOW_LORA_CONNECTION_MENU,
+    WINDOW_LORA_CONNECTION_MENU_COMBO,
+    WINDOW_SERIAL_CONNECTION_MENU,
+    WINDOW_SERIAL_CONNECTION_MENU_COMBO,
+)
+
+
+def connection_window_connect_lora(sender, app_data, user_data: AppState) -> None:
+    device = dpg.get_value(WINDOW_LORA_CONNECTION_MENU_COMBO)
+    dataflux.services.serial.connect_lora(user_data, device)
+    dataflux.ui.routines.update_global_connection_status(user_data)
+    dpg.hide_item(WINDOW_LORA_CONNECTION_MENU)
 
 
 def connection_window_connect_serial(sender, app_data, user_data: AppState) -> None:
-    device = dpg.get_value(WINDOW_CONNECTION_MENU_COMBO)
+    device = dpg.get_value(WINDOW_SERIAL_CONNECTION_MENU_COMBO)
     dataflux.services.serial.connect_serial(user_data, device)
     dataflux.ui.routines.update_global_connection_status(user_data)
-    dpg.hide_item(WINDOW_CONNECTION_MENU)
-    
+    dpg.hide_item(WINDOW_SERIAL_CONNECTION_MENU)

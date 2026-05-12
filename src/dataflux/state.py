@@ -22,12 +22,19 @@ class Buffers:
 class AppState:
     running: bool = True
 
+    lora_port: Serial | None = None
+    lora_thread: Thread | None = None
+    lora_thread_running: bool = False
+
     serial_port: Serial | None = None
     serial_thread: Thread | None = None
     serial_thread_running: bool = False
 
     telemetry_thread: Thread | None = None
     telemetry_thread_running: bool = False
+
+    lora_status_thread: Thread | None = None
+    lora_status_queue: Queue = field(default_factory=Queue)
 
     serial_status_thread: Thread | None = None
     serial_status_queue: Queue = field(default_factory=Queue)

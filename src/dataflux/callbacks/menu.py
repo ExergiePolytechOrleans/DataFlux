@@ -15,17 +15,28 @@ from dataflux.tags import (
     GRAPH_X_AXIS_SPEED,
     GRAPH_X_AXIS_TENG,
     GRAPH_X_AXIS_VBAT,
-    WINDOW_CONNECTION_MENU,
+    WINDOW_LORA_CONNECTION_MENU,
     WINDOW_FILE_DIALOG_DUMP_BUFFERS,
+    WINDOW_SERIAL_CONNECTION_MENU,
 )
 
 
-def open_connection_window(sender, app_data, user_data) -> None:
-    dataflux.ui.routines.windows.update_window_connection_menu_combo()
-    dpg.show_item(WINDOW_CONNECTION_MENU)
+def open_lora_connection_window(sender, app_data, user_data: AppState) -> None:
+    dataflux.ui.routines.windows.update_window_lora_connection_menu_combo(user_data)
+    dpg.show_item(WINDOW_LORA_CONNECTION_MENU)
 
 
-def menu_file_disconnect(sender, app_data, user_data) -> None:
+def open_serial_connection_window(sender, app_data, user_data: AppState) -> None:
+    dataflux.ui.routines.windows.update_window_serial_connection_menu_combo(user_data)
+    dpg.show_item(WINDOW_SERIAL_CONNECTION_MENU)
+
+
+def menu_io_disconnect_lora(sender, app_data, user_data: AppState) -> None:
+    dataflux.services.serial.disconnect_lora(user_data)
+    update_global_connection_status(user_data)
+
+
+def menu_io_disconnect_serial(sender, app_data, user_data: AppState) -> None:
     dataflux.services.serial.disconnect_serial(user_data)
     update_global_connection_status(user_data)
 

@@ -22,21 +22,29 @@ from dataflux.tags import (
     LIVE_DATA_VBAT_VALUE,
     LIVE_DATA_VEHICLE_TIME_VALUE,
     LIVE_DATA_SPEED_VALUE,
-    MENU_FILE_CONNECT,
-    MENU_FILE_DISCONNECT,
+    MENU_IO_CONNECT_LORA,
+    MENU_IO_DISCONNECT_LORA,
     MENU_FILE_DUMP_BUFFERS,
+    MENU_IO_CONNECT_SERIAL,
+    MENU_IO_DISCONNECT_SERIAL,
     PAGE_LAP_RECAP,
     PAGE_LIVE_DATA,
+    PAGE_SERIAL_CONSOLE,
+    STATUS_LORA_STATUS_BOX,
+    STATUS_LORA_STATUS_TEXT,
     STATUS_SERIAL_STATUS_BOX,
     STATUS_SERIAL_STATUS_TEXT,
     SUB_PAGE_DATA_GRAPHS,
     SUB_PAGE_MAP,
+    TEXT_SERIAL_CONSOLE,
     THEME_STATUS_CONNECTED,
     THEME_STATUS_CONNECTED_BRIGHT,
     THEME_STATUS_DISCONNECTED,
-    WINDOW_CONNECTION_MENU,
-    WINDOW_CONNECTION_MENU_COMBO,
+    WINDOW_LORA_CONNECTION_MENU,
+    WINDOW_LORA_CONNECTION_MENU_COMBO,
     WINDOW_FILE_DIALOG_DUMP_BUFFERS,
+    WINDOW_SERIAL_CONNECTION_MENU,
+    WINDOW_SERIAL_CONNECTION_MENU_COMBO,
 )
 from dataflux.ui.colors import STATUS_GREEN_BRIGHT, STATUS_GREEN_DARK, STATUS_RED_DARK
 
@@ -58,25 +66,41 @@ def build_windows(state: AppState) -> None:
         with dpg.menu_bar():
             with dpg.menu(label="File"):
                 dpg.add_menu_item(
-                    label="Connect",
-                    enabled=True,
-                    tag=MENU_FILE_CONNECT,
-                    callback=dataflux.callbacks.menu.open_connection_window,
-                )
-                dpg.add_menu_item(
-                    label="Disonnect",
-                    enabled=False,
-                    tag=MENU_FILE_DISCONNECT,
-                    callback=dataflux.callbacks.menu.menu_file_disconnect,
-                    user_data=state,
-                )
-                dpg.add_menu_item(
                     label="Dump Buffers",
                     enabled=True,
                     tag=MENU_FILE_DUMP_BUFFERS,
                     callback=dataflux.callbacks.menu.menu_file_dump_buffers,
                 )
                 dpg.add_menu_item(label="Quit")
+            with dpg.menu(label="IO"):
+                dpg.add_menu_item(
+                    label="Connect LoRa",
+                    enabled=True,
+                    tag=MENU_IO_CONNECT_LORA,
+                    callback=dataflux.callbacks.menu.open_lora_connection_window,
+                    user_data=state,
+                )
+                dpg.add_menu_item(
+                    label="Disonnect LoRa",
+                    enabled=False,
+                    tag=MENU_IO_DISCONNECT_LORA,
+                    callback=dataflux.callbacks.menu.menu_io_disconnect_lora,
+                    user_data=state,
+                )
+                dpg.add_menu_item(
+                    label="Connect Serial",
+                    enabled=True,
+                    tag=MENU_IO_CONNECT_SERIAL,
+                    callback=dataflux.callbacks.menu.open_serial_connection_window,
+                    user_data=state,
+                )
+                dpg.add_menu_item(
+                    label="Disonnect Serial",
+                    enabled=False,
+                    tag=MENU_IO_DISCONNECT_SERIAL,
+                    callback=dataflux.callbacks.menu.menu_io_disconnect_serial,
+                    user_data=state,
+                )
             with dpg.menu(label="Window"):
                 dpg.add_menu_item(
                     label="Live Graphs",
@@ -91,6 +115,11 @@ def build_windows(state: AppState) -> None:
                 dpg.add_menu_item(
                     label="Lap Recap",
                     user_data=PAGE_LAP_RECAP,
+                    callback=dataflux.callbacks.menu.menu_window_select,
+                )
+                dpg.add_menu_item(
+                    label="Serial Console",
+                    user_data=PAGE_SERIAL_CONSOLE,
                     callback=dataflux.callbacks.menu.menu_window_select,
                 )
             with dpg.menu(label="Data"):
@@ -255,6 +284,18 @@ def build_windows(state: AppState) -> None:
                 dpg.add_text("Lap Recap")
                 dpg.add_separator()
 
+            with dpg.group(tag=PAGE_SERIAL_CONSOLE, show=False):
+                with dpg.child_window(
+                    width=-1,
+                    height=-40,
+                    border=True,
+                    horizontal_scrollbar=False,
+                ):
+                    dpg.add_text(tag=TEXT_SERIAL_CONSOLE, wrap=0)
+                with dpg.group(horizontal=True):
+                    dpg.add_input_text(width=-100)
+                    dpg.add_button(label="Send", width=100)
+
         with dpg.theme(tag=THEME_STATUS_CONNECTED):
             with dpg.theme_component(dpg.mvChildWindow):
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, STATUS_GREEN_DARK)
@@ -276,6 +317,33 @@ def build_windows(state: AppState) -> None:
         ):
             with dpg.group(horizontal=True):
                 with dpg.child_window(
+                    width=200, height=28, border=False, tag=STATUS_LORA_STATUS_BOX
+                ):
+                    with dpg.table(
+                        header_row=False,
+                        resizable=False,
+                        policy=dpg.mvTable_SizingStretchProp,
+                        borders_innerV=False,
+                        borders_innerH=False,
+                        borders_outerH=False,
+                        borders_outerV=False,
+                        no_host_extendX=False,
+                        no_pad_innerX=True,
+                    ):
+                        dpg.add_table_column(init_width_or_weight=1.0)
+                        dpg.add_table_column(width_fixed=True)
+                        dpg.add_table_column(init_width_or_weight=1.0)
+                        with dpg.table_row():
+                            with dpg.table_cell():
+                                pass
+                            with dpg.table_cell():
+                                dpg.add_text(
+                                    "LoRa: Disconnected",
+                                    tag=STATUS_LORA_STATUS_TEXT,
+                                )
+                            with dpg.table_cell():
+                                pass
+                with dpg.child_window(
                     width=200, height=28, border=False, tag=STATUS_SERIAL_STATUS_BOX
                 ):
                     with dpg.table(
@@ -295,27 +363,43 @@ def build_windows(state: AppState) -> None:
                         with dpg.table_row():
                             with dpg.table_cell():
                                 pass
-
                             with dpg.table_cell():
                                 dpg.add_text(
                                     "Serial: Disconnected",
                                     tag=STATUS_SERIAL_STATUS_TEXT,
                                 )
-
                             with dpg.table_cell():
                                 pass
 
+    dpg.bind_item_theme(STATUS_LORA_STATUS_BOX, THEME_STATUS_DISCONNECTED)
     dpg.bind_item_theme(STATUS_SERIAL_STATUS_BOX, THEME_STATUS_DISCONNECTED)
 
     with dpg.window(
-        label="Connection Menu",
-        tag=WINDOW_CONNECTION_MENU,
+        label="LoRa Connection Menu",
+        tag=WINDOW_LORA_CONNECTION_MENU,
         show=False,
         modal=True,
         no_collapse=True,
-        width=300,
+        width=400,
+        no_resize=True,
     ):
-        dpg.add_combo([], tag=WINDOW_CONNECTION_MENU_COMBO)
+        dpg.add_combo([], tag=WINDOW_LORA_CONNECTION_MENU_COMBO)
+        dpg.add_button(
+            label="Connect",
+            callback=dataflux.callbacks.serial.connection_window_connect_lora,
+            user_data=state,
+        )
+
+    with dpg.window(
+        label="Serial Connection Menu",
+        tag=WINDOW_SERIAL_CONNECTION_MENU,
+        show=False,
+        modal=True,
+        no_collapse=True,
+        width=400,
+        no_resize=True,
+    ):
+        dpg.add_combo([], tag=WINDOW_SERIAL_CONNECTION_MENU_COMBO)
         dpg.add_button(
             label="Connect",
             callback=dataflux.callbacks.serial.connection_window_connect_serial,
