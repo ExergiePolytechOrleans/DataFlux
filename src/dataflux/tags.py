@@ -13,6 +13,8 @@ WINDOW_LORA_CONNECTION_MENU_COMBO: str = "window_lora_connection_menu_combo"
 WINDOW_SERIAL_CONNECTION_MENU_COMBO: str = "window_serial_connection_menu_combo"
 WINDOW_FILE_DIALOG_DUMP_BUFFERS: str = "window_file_dialog_dump_buffers"
 
+CHILD_WINDOW_SERIAL_CONSOLE: str = "child_window_serial_console"
+
 STATUS_LORA_STATUS_BOX: str = "status_lora_status_box"
 STATUS_LORA_STATUS_TEXT: str = "status_lora_status_text"
 STATUS_SERIAL_STATUS_BOX: str = "status_serial_status_box"
@@ -29,6 +31,10 @@ PAGE_LAP_RECAP: str = "page_lap_recap"
 PAGE_SERIAL_CONSOLE: str = "page_serial_console"
 
 TEXT_SERIAL_CONSOLE: str = "text_serial_console"
+
+BUTTON_SERIAL_CONSOLE_SEND: str = "button_serial_console_send"
+
+INPUT_SERIAL_CONSOLE: str = "input_serial_console"
 
 SUB_PAGE_DATA_GRAPHS: str = "sub_page_data_graphs"
 SUB_PAGE_MAP: str = "sub_page_map"

@@ -8,6 +8,9 @@ import dataflux.ui.routines
 
 from dataflux.state import AppState
 from dataflux.tags import (
+    BUTTON_SERIAL_CONSOLE_SEND,
+    INPUT_SERIAL_CONSOLE,
+    TEXT_SERIAL_CONSOLE,
     WINDOW_LORA_CONNECTION_MENU,
     WINDOW_LORA_CONNECTION_MENU_COMBO,
     WINDOW_SERIAL_CONNECTION_MENU,
@@ -27,3 +30,10 @@ def connection_window_connect_serial(sender, app_data, user_data: AppState) -> N
     dataflux.services.serial.connect_serial(user_data, device)
     dataflux.ui.routines.update_global_connection_status(user_data)
     dpg.hide_item(WINDOW_SERIAL_CONNECTION_MENU)
+
+
+def serial_console_button_send(sender, app_data, user_data: AppState) -> None:
+    text = dpg.get_value(INPUT_SERIAL_CONSOLE)
+    dpg.set_value(INPUT_SERIAL_CONSOLE, "")
+    user_data.serial_send_queue.put(text)
+    print("Put into send queue: " + text)

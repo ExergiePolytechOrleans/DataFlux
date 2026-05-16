@@ -29,6 +29,7 @@ class AppState:
     serial_port: Serial | None = None
     serial_thread: Thread | None = None
     serial_data_queue: Queue | None = field(default_factory=Queue)
+    serial_send_queue: Queue | None = field(default_factory=Queue)
     serial_thread_running: bool = False
 
     telemetry_thread: Thread | None = None

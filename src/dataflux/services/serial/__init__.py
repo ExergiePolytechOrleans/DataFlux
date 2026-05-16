@@ -51,10 +51,10 @@ def connect_serial(state: AppState, device: str) -> None:
         state.serial_port.close()
         state.serial_port = None
 
-    state.serial_port = Serial(port=device, baudrate=115200)
-    state.serial_thread = Thread(
-        target=serial_reader_worker, args=(state,), daemon=True
+    state.serial_port = Serial(
+        port=device, baudrate=115200, timeout=0.05, write_timeout=0.1
     )
+    state.serial_thread = Thread(target=serial_worker, args=(state,), daemon=True)
     state.serial_status_thread = Thread(
         target=serial_status_worker, args=(state,), daemon=True
     )
@@ -87,7 +87,7 @@ def lora_status_worker(state: AppState) -> None:
         dataflux.ui.routines.status.flash_status_connection_status(duration)
 
 
-def serial_reader_worker(state: AppState) -> None:
+def serial_worker(state: AppState) -> None:
     while state.serial_thread_running:
         port = state.serial_port
         if port is None:
@@ -103,6 +103,16 @@ def serial_reader_worker(state: AppState) -> None:
         if line:
             text = line.decode("utf-8", errors="replace")
             state.serial_data_queue.put(text)
+
+        if port.writable():
+            try:
+                data: str = state.serial_send_queue.get_nowait()
+            except Empty:
+                pass
+            else:
+                state.serial_data_queue.put(data + "\n")
+                port.write(data.encode("utf-8"))
+                print("Wrote data: " + data)
     disconnect_serial(state)
     dataflux.ui.routines.update_global_connection_status(state)
 

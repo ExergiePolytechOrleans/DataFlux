@@ -8,6 +8,8 @@ import dataflux.callbacks.serial
 
 from dataflux.state import AppState
 from dataflux.tags import (
+    BUTTON_SERIAL_CONSOLE_SEND,
+    CHILD_WINDOW_SERIAL_CONSOLE,
     GRAPH_SERIES_SPEED,
     GRAPH_SERIES_TENG,
     GRAPH_SERIES_VBAT,
@@ -17,6 +19,7 @@ from dataflux.tags import (
     GRAPH_Y_AXIS_SPEED,
     GRAPH_Y_AXIS_TENG,
     GRAPH_Y_AXIS_VBAT,
+    INPUT_SERIAL_CONSOLE,
     LIVE_DATA_TENG_VALUE,
     LIVE_DATA_UTC_TIME_VALUE,
     LIVE_DATA_VBAT_VALUE,
@@ -286,6 +289,7 @@ def build_windows(state: AppState) -> None:
 
             with dpg.group(tag=PAGE_SERIAL_CONSOLE, show=False):
                 with dpg.child_window(
+                    tag=CHILD_WINDOW_SERIAL_CONSOLE,
                     width=-1,
                     height=-40,
                     border=True,
@@ -293,8 +297,14 @@ def build_windows(state: AppState) -> None:
                 ):
                     dpg.add_text(tag=TEXT_SERIAL_CONSOLE, wrap=0)
                 with dpg.group(horizontal=True):
-                    dpg.add_input_text(width=-100)
-                    dpg.add_button(label="Send", width=100)
+                    dpg.add_input_text(tag=INPUT_SERIAL_CONSOLE, width=-100)
+                    dpg.add_button(
+                        tag=BUTTON_SERIAL_CONSOLE_SEND,
+                        label="Send",
+                        width=100,
+                        callback=dataflux.callbacks.serial.serial_console_button_send,
+                        user_data=state,
+                    )
 
         with dpg.theme(tag=THEME_STATUS_CONNECTED):
             with dpg.theme_component(dpg.mvChildWindow):
