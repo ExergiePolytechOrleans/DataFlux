@@ -81,7 +81,7 @@ def disconnect_serial(state: AppState) -> None:
 def lora_status_worker(state: AppState) -> None:
     while state.lora_thread_running:
         try:
-            duration = state.lora_status_queue.get(timeout=0.1)
+            duration = state.lora_status_queue.get_nowait()
         except Empty:
             continue
         dataflux.ui.routines.status.flash_status_connection_status(duration)
@@ -102,11 +102,7 @@ def serial_reader_worker(state: AppState) -> None:
 
         if line:
             text = line.decode("utf-8", errors="replace")
-
-            print(text, end="")
-
-            old = dpg.get_value(TEXT_SERIAL_CONSOLE)
-            dpg.set_value(TEXT_SERIAL_CONSOLE, old + text)
+            state.serial_data_queue.put(text)
     disconnect_serial(state)
     dataflux.ui.routines.update_global_connection_status(state)
 

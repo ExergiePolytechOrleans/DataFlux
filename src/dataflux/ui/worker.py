@@ -2,6 +2,7 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from queue import Empty
 import dearpygui.dearpygui as dpg
 import datetime
 import time
@@ -19,6 +20,7 @@ from dataflux.tags import (
     LIVE_DATA_VEHICLE_TIME_VALUE,
     LIVE_DATA_SPEED_VALUE,
 )
+from dataflux.ui.routines.serial import append_text_to_console
 
 
 def ui_worker(state: AppState):
@@ -35,6 +37,14 @@ def ui_worker(state: AppState):
         if formatted != last_datetime:
             dpg.set_value(LIVE_DATA_UTC_TIME_VALUE, formatted)
             last_datetime = formatted
+
+        if state.serial_thread_running:
+            try:
+                text = state.serial_data_queue.get_nowait()
+            except Empty:
+                pass
+            else:
+                append_text_to_console(text)
 
         if state.lora_thread_running and state.telemetry_valid:
             x_common: list[float] | None = None

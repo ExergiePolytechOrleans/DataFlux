@@ -15,7 +15,7 @@ def telemetry_worker(state: AppState):
             time.sleep(1)
             continue
         try:
-            dataframe = state.packet_queue.get(timeout=0.1)
+            dataframe = state.packet_queue.get_nowait()
         except Empty:
             continue
 
