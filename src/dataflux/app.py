@@ -2,6 +2,7 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from datetime import datetime
 from pathlib import Path
 import sys
 from threading import Thread
@@ -40,6 +41,7 @@ def _asset_path(relative_path: str) -> str:
 
 def run() -> None:
     state: AppState = AppState()
+    state.start_time = datetime.now()
 
     # Create application context and viewport
     dpg.create_context()
@@ -90,6 +92,12 @@ def run() -> None:
         target=dataflux.services.telemetry.telemetry_worker, args=(state,), daemon=True
     )
     state.telemetry_thread.start()
+
+    state.ports_thread_running = True
+    state.ports_thread = Thread(
+        target=dataflux.ui.worker.ports_worker, args=(state,), daemon=True
+    )
+    state.ports_thread.start()
 
     dpg.start_dearpygui()
 

@@ -8,9 +8,7 @@ import dataflux.ui.routines
 
 from dataflux.state import AppState
 from dataflux.tags import (
-    BUTTON_SERIAL_CONSOLE_SEND,
     INPUT_SERIAL_CONSOLE,
-    TEXT_SERIAL_CONSOLE,
     WINDOW_LORA_CONNECTION_MENU,
     WINDOW_LORA_CONNECTION_MENU_COMBO,
     WINDOW_SERIAL_CONNECTION_MENU,

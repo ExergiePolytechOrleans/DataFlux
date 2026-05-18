@@ -7,13 +7,13 @@ import dearpygui.dearpygui as dpg
 import datetime
 import time
 from datetime import datetime, timezone
+import serial.tools.list_ports
 
 from dataflux.state import AppState
 from dataflux.tags import (
     GRAPH_SERIES_SPEED,
     GRAPH_SERIES_TENG,
     GRAPH_SERIES_VBAT,
-    GRAPH_X_AXIS_SPEED,
     LIVE_DATA_TENG_VALUE,
     LIVE_DATA_UTC_TIME_VALUE,
     LIVE_DATA_VBAT_VALUE,
@@ -21,6 +21,12 @@ from dataflux.tags import (
     LIVE_DATA_SPEED_VALUE,
 )
 from dataflux.ui.routines.serial import append_text_to_console
+
+
+def ports_worker(state: AppState) -> None:
+    while state.ports_thread_running:
+        state.ports = serial.tools.list_ports.comports()
+        time.sleep(5)
 
 
 def ui_worker(state: AppState):
@@ -31,6 +37,10 @@ def ui_worker(state: AppState):
     last_teng: str = ""
     no_data_written = False
     while state.running:
+        # if state.autosave_enabled:
+        #     dpg.set_value(MENU_FILE_AUTOSAVE_BUFFERS, True)
+        # else:
+        #     dpg.set_value(MENU_FILE_AUTOSAVE_BUFFERS, False)
         now = datetime.now(timezone.utc)
         formatted = now.strftime("%H:%M:%S")
 

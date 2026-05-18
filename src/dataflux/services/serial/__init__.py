@@ -20,10 +20,11 @@ import dataflux.ui.routines
 from dataflux.state import AppState
 
 
-def list_serial_ports() -> list[str]:
-    ports = serial.tools.list_ports.comports()
+def list_serial_ports(state: AppState) -> list[str]:
+
     valid_ports: list[str] = []
-    for port in ports:
+
+    for port in state.ports:
         if port.vid is not None and port.pid is not None:
             valid_ports.append(port.device)
 
@@ -222,6 +223,16 @@ def parse_uart_packet(body: bytes) -> dict | None:
             "lat": pkt.lat,
             "lng": pkt.lng,
             "speed": pkt.speed,
+        }
+
+    if lora.version == 3:
+        pkt = dataflux.telemetry_common.telemetry_common.unpack_packet3(payload)
+        return {
+            **base,
+            "type": "packet3",
+            "start_time": pkt.start_time,
+            "duration": pkt.duration,
+            "count": pkt.count,
         }
 
     print("Unknown payload")

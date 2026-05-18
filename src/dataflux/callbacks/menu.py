@@ -15,6 +15,7 @@ from dataflux.tags import (
     GRAPH_X_AXIS_SPEED,
     GRAPH_X_AXIS_TENG,
     GRAPH_X_AXIS_VBAT,
+    WINDOW_FILE_DIALOG_AUTOSAVE_BUFFERS,
     WINDOW_LORA_CONNECTION_MENU,
     WINDOW_FILE_DIALOG_DUMP_BUFFERS,
     WINDOW_SERIAL_CONNECTION_MENU,
@@ -27,8 +28,11 @@ def open_lora_connection_window(sender, app_data, user_data: AppState) -> None:
 
 
 def open_serial_connection_window(sender, app_data, user_data: AppState) -> None:
+    print("Handling serial window open callback")
     dataflux.ui.routines.windows.update_window_serial_connection_menu_combo(user_data)
+    print("Combo updated")
     dpg.show_item(WINDOW_SERIAL_CONNECTION_MENU)
+    print("Window shown")
 
 
 def menu_io_disconnect_lora(sender, app_data, user_data: AppState) -> None:
@@ -45,6 +49,10 @@ def menu_file_dump_buffers(sender, app_data, user_data: AppState) -> None:
     dpg.show_item(WINDOW_FILE_DIALOG_DUMP_BUFFERS)
 
 
+def menu_file_quit(sender, app_data, user_data) -> None:
+    dpg.stop_dearpygui()
+
+
 def window_file_dialog_dump_buffers_ok(sender, app_data, user_data: AppState) -> None:
     user_data.buffer_dump_thread = Thread(
         target=dataflux.services.telemetry.buffer_dump,
@@ -52,6 +60,26 @@ def window_file_dialog_dump_buffers_ok(sender, app_data, user_data: AppState) ->
         daemon=True,
     )
     user_data.buffer_dump_thread.start()
+
+
+def menu_file_autosave_buffers(sender, app_state, user_data: AppState) -> None:
+    if user_data.autosave_enabled:
+        user_data.autosave_enabled = False
+        user_data.autosave_buffer_thread = None
+    else:
+        dpg.show_item(WINDOW_FILE_DIALOG_AUTOSAVE_BUFFERS)
+
+
+def window_file_dialog_autosave_buffers_ok(
+    sender, app_data, user_data: AppState
+) -> None:
+    user_data.autosave_enabled = True
+    user_data.autosave_buffer_thread = Thread(
+        target=dataflux.services.telemetry.autosave_worker,
+        args=(user_data, app_data["file_path_name"]),
+        daemon=True,
+    )
+    user_data.autosave_buffer_thread.start()
 
 
 def menu_window_select(sender, app_data, user_data: str) -> None:

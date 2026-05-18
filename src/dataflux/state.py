@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from threading import Lock, Thread
 from serial import Serial
 from queue import Queue
+
+from serial.tools.list_ports_common import ListPortInfo
 
 
 @dataclass
@@ -21,6 +24,11 @@ class Buffers:
 @dataclass
 class AppState:
     running: bool = True
+    start_time: datetime = datetime.now()
+
+    ports: list[ListPortInfo] = field(default_factory=list)
+    ports_thread: Thread | None = None
+    ports_thread_running: bool = False
 
     lora_port: Serial | None = None
     lora_thread: Thread | None = None
@@ -53,5 +61,7 @@ class AppState:
     live_buffer_len: int = 30
 
     buffer_dump_thread: Thread | None = None
+    autosave_buffer_thread: Thread | None = None
+    autosave_enabled: bool = False
 
     lock: Lock = field(default_factory=Lock)

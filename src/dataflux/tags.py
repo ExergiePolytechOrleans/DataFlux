@@ -7,11 +7,13 @@ MENU_IO_CONNECT_SERIAL: str = "menu_io_connect_serial"
 MENU_IO_DISCONNECT_LORA: str = "menu_io_disconnect_lora"
 MENU_IO_DISCONNECT_SERIAL: str = "menu_io_disconnect_serial"
 MENU_FILE_DUMP_BUFFERS: str = "menu_file_dump_buffers"
+MENU_FILE_AUTOSAVE_BUFFERS: str = "menu_file_autosave_buffers"
 WINDOW_LORA_CONNECTION_MENU: str = "window_lora_connection_menu"
 WINDOW_SERIAL_CONNECTION_MENU: str = "window_serial_connection_menu"
 WINDOW_LORA_CONNECTION_MENU_COMBO: str = "window_lora_connection_menu_combo"
 WINDOW_SERIAL_CONNECTION_MENU_COMBO: str = "window_serial_connection_menu_combo"
 WINDOW_FILE_DIALOG_DUMP_BUFFERS: str = "window_file_dialog_dump_buffers"
+WINDOW_FILE_DIALOG_AUTOSAVE_BUFFERS: str = "window_file_dialog_autosave_buffers"
 
 CHILD_WINDOW_SERIAL_CONSOLE: str = "child_window_serial_console"
 

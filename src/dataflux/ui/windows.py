@@ -25,6 +25,7 @@ from dataflux.tags import (
     LIVE_DATA_VBAT_VALUE,
     LIVE_DATA_VEHICLE_TIME_VALUE,
     LIVE_DATA_SPEED_VALUE,
+    MENU_FILE_AUTOSAVE_BUFFERS,
     MENU_IO_CONNECT_LORA,
     MENU_IO_DISCONNECT_LORA,
     MENU_FILE_DUMP_BUFFERS,
@@ -43,6 +44,7 @@ from dataflux.tags import (
     THEME_STATUS_CONNECTED,
     THEME_STATUS_CONNECTED_BRIGHT,
     THEME_STATUS_DISCONNECTED,
+    WINDOW_FILE_DIALOG_AUTOSAVE_BUFFERS,
     WINDOW_LORA_CONNECTION_MENU,
     WINDOW_LORA_CONNECTION_MENU_COMBO,
     WINDOW_FILE_DIALOG_DUMP_BUFFERS,
@@ -74,7 +76,18 @@ def build_windows(state: AppState) -> None:
                     tag=MENU_FILE_DUMP_BUFFERS,
                     callback=dataflux.callbacks.menu.menu_file_dump_buffers,
                 )
-                dpg.add_menu_item(label="Quit")
+                dpg.add_menu_item(
+                    label="Autosave Buffers",
+                    enabled=True,
+                    check=True,
+                    default_value=False,
+                    tag=MENU_FILE_AUTOSAVE_BUFFERS,
+                    callback=dataflux.callbacks.menu.menu_file_autosave_buffers,
+                    user_data=state,
+                )
+                dpg.add_menu_item(
+                    label="Quit", callback=dataflux.callbacks.menu.menu_file_quit
+                )
             with dpg.menu(label="IO"):
                 dpg.add_menu_item(
                     label="Connect LoRa",
@@ -427,3 +440,15 @@ def build_windows(state: AppState) -> None:
         user_data=state,
     ):
         dpg.add_file_extension(".csv")
+
+    with dpg.file_dialog(
+        directory_selector=True,
+        show=False,
+        tag=WINDOW_FILE_DIALOG_AUTOSAVE_BUFFERS,
+        width=700,
+        height=400,
+        modal=True,
+        callback=dataflux.callbacks.menu.window_file_dialog_autosave_buffers_ok,
+        user_data=state,
+    ):
+        pass

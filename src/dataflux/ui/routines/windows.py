@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import dearpygui.dearpygui as dpg
 
-import dataflux.config
 from dataflux.services.serial import list_serial_ports
 from dataflux.state import AppState
 from dataflux.tags import (
@@ -18,7 +17,7 @@ from dataflux.tags import (
 
 
 def update_window_lora_connection_menu_combo(state: AppState) -> None:
-    ports: list[str] = list_serial_ports()
+    ports: list[str] = list_serial_ports(state)
     if state.serial_port is not None and state.serial_thread_running:
         port_name = state.serial_port.name
 
@@ -28,7 +27,7 @@ def update_window_lora_connection_menu_combo(state: AppState) -> None:
 
 
 def update_window_serial_connection_menu_combo(state: AppState) -> None:
-    ports: list[str] = list_serial_ports()
+    ports: list[str] = list_serial_ports(state)
     if state.lora_port is not None and state.lora_thread_running:
         port_name = state.lora_port.name
 
