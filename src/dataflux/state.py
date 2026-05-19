@@ -4,6 +4,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from threading import Lock, Thread
 from serial import Serial
 from queue import Queue
@@ -19,6 +20,13 @@ class Buffers:
     teng: list[float] = field(default_factory=list)
     lat: list[float] = field(default_factory=list)
     lng: list[float] = field(default_factory=list)
+
+
+@dataclass
+class LapInfo:
+    start_time: int = field(default_factory=int)
+    end_time: int = field(default_factory=int)
+    count: int = field(default_factory=int)
 
 
 @dataclass
@@ -60,8 +68,13 @@ class AppState:
     live_buffers_updated: bool = False
     live_buffer_len: int = 30
 
+    lap_lock: Lock = field(default_factory=Lock)
+    new_laps: Queue = field(default_factory=Queue)
+    laps: list[LapInfo] = field(default_factory=list)
+
     buffer_dump_thread: Thread | None = None
     autosave_buffer_thread: Thread | None = None
     autosave_enabled: bool = False
+    autosave_path: Path | None = None
 
     lock: Lock = field(default_factory=Lock)

@@ -32,7 +32,7 @@ def update_status_connection_status(state: AppState):
         dpg.set_value(STATUS_SERIAL_STATUS_TEXT, "Serial: Connected")
 
 
-def flash_status_connection_status(duration: float) -> None:
-    dpg.bind_item_theme(STATUS_LORA_STATUS_BOX, THEME_STATUS_CONNECTED_BRIGHT)
+def flash_status_connection_status(duration: float, tag: str) -> None:
+    dpg.bind_item_theme(tag, THEME_STATUS_CONNECTED_BRIGHT)
     sleep(duration)
-    dpg.bind_item_theme(STATUS_LORA_STATUS_BOX, THEME_STATUS_CONNECTED)
+    dpg.bind_item_theme(tag, THEME_STATUS_CONNECTED)

@@ -12,7 +12,11 @@ from serial import Serial
 import serial.tools.list_ports
 import dearpygui.dearpygui as dpg
 from dataflux import telemetry_common
-from dataflux.tags import TEXT_SERIAL_CONSOLE
+from dataflux.tags import (
+    STATUS_LORA_STATUS_BOX,
+    STATUS_SERIAL_STATUS_BOX,
+    TEXT_SERIAL_CONSOLE,
+)
 import dataflux.telemetry_common.telemetry_common
 import dataflux.ui.routines.status
 import dataflux.ui.routines
@@ -85,7 +89,9 @@ def lora_status_worker(state: AppState) -> None:
             duration = state.lora_status_queue.get_nowait()
         except Empty:
             continue
-        dataflux.ui.routines.status.flash_status_connection_status(duration)
+        dataflux.ui.routines.status.flash_status_connection_status(
+            duration, STATUS_LORA_STATUS_BOX
+        )
 
 
 def serial_worker(state: AppState) -> None:
@@ -104,6 +110,7 @@ def serial_worker(state: AppState) -> None:
         if line:
             text = line.decode("utf-8", errors="replace")
             state.serial_data_queue.put(text)
+            state.serial_status_queue.put(0.05)
 
         if port.writable():
             try:
@@ -112,15 +119,21 @@ def serial_worker(state: AppState) -> None:
                 pass
             else:
                 state.serial_data_queue.put(data + "\n")
+                state.serial_status_queue.put(0.05)
                 port.write(data.encode("utf-8"))
-                print("Wrote data: " + data)
     disconnect_serial(state)
     dataflux.ui.routines.update_global_connection_status(state)
 
 
 def serial_status_worker(state: AppState) -> None:
     while state.serial_thread_running:
-        time.sleep(1)
+        try:
+            duration = state.serial_status_queue.get_nowait()
+        except Empty:
+            continue
+        dataflux.ui.routines.status.flash_status_connection_status(
+            duration, STATUS_SERIAL_STATUS_BOX
+        )
 
 
 def lora_reader_worker(state: AppState) -> None:
