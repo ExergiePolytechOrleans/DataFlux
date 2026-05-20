@@ -24,6 +24,7 @@ def update_window_lora_connection_menu_combo(state: AppState) -> None:
         if port_name in ports:
             ports.remove(port_name)
     dpg.configure_item(WINDOW_LORA_CONNECTION_MENU_COMBO, items=ports)
+    dpg.set_value(WINDOW_LORA_CONNECTION_MENU_COMBO, "")
 
 
 def update_window_serial_connection_menu_combo(state: AppState) -> None:
@@ -34,6 +35,7 @@ def update_window_serial_connection_menu_combo(state: AppState) -> None:
         if port_name in ports:
             ports.remove(port_name)
     dpg.configure_item(WINDOW_SERIAL_CONNECTION_MENU_COMBO, items=ports)
+    dpg.set_value(WINDOW_SERIAL_CONNECTION_MENU_COMBO, "")
 
 
 def hide_all_but(tag: str) -> None:

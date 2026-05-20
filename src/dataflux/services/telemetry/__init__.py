@@ -184,6 +184,40 @@ def autosave_worker(state: AppState, path: str) -> None:
         time.sleep(30)
 
 
+def lap_load_worker(state: AppState, path: str) -> None:
+    state.lap_recap_buffers.timestamp.clear()
+    state.lap_recap_buffers.speed.clear()
+    state.lap_recap_buffers.vbat.clear()
+    state.lap_recap_buffers.teng.clear()
+    state.lap_recap_buffers.lat.clear()
+    state.lap_recap_buffers.lng.clear()
+
+    load_path = Path(path)
+
+    try:
+        with load_path.open("r", newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+
+            for row in reader:
+                state.lap_recap_buffers.timestamp.append(int(row["timestamp"]))
+                state.lap_recap_buffers.speed.append(float(row["speed"]))
+                state.lap_recap_buffers.vbat.append(float(row["vbat"]))
+                state.lap_recap_buffers.teng.append(float(row["teng"]))
+                state.lap_recap_buffers.lat.append(float(row["lat"]))
+                state.lap_recap_buffers.lng.append(float(row["lng"]))
+
+    except FileNotFoundError:
+        pass
+    except KeyError:
+        pass
+    except ValueError:
+        pass
+    else:
+        state.lap_recap_updated = True
+
+    state.lap_loader_thread = None
+
+
 def closest_idx(values: list[int], target: int) -> int:
     if not values:
         raise ValueError("Cannot find closest index in an empty list")

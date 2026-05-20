@@ -2,6 +2,7 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from operator import call
 import dearpygui.dearpygui as dpg
 import dataflux.callbacks.menu
 import dataflux.callbacks.serial
@@ -11,14 +12,23 @@ from dataflux.tags import (
     BUTTON_SERIAL_CONSOLE_SEND,
     CHILD_WINDOW_SERIAL_CONSOLE,
     GRAPH_SERIES_SPEED,
+    GRAPH_SERIES_SPEED_LR,
     GRAPH_SERIES_TENG,
+    GRAPH_SERIES_TENG_LR,
     GRAPH_SERIES_VBAT,
+    GRAPH_SERIES_VBAT_LR,
     GRAPH_X_AXIS_SPEED,
+    GRAPH_X_AXIS_SPEED_LR,
     GRAPH_X_AXIS_TENG,
+    GRAPH_X_AXIS_TENG_LR,
     GRAPH_X_AXIS_VBAT,
+    GRAPH_X_AXIS_VBAT_LR,
     GRAPH_Y_AXIS_SPEED,
+    GRAPH_Y_AXIS_SPEED_LR,
     GRAPH_Y_AXIS_TENG,
+    GRAPH_Y_AXIS_TENG_LR,
     GRAPH_Y_AXIS_VBAT,
+    GRAPH_Y_AXIS_VBAT_LR,
     INPUT_SERIAL_CONSOLE,
     LIVE_DATA_TENG_VALUE,
     LIVE_DATA_UTC_TIME_VALUE,
@@ -26,6 +36,7 @@ from dataflux.tags import (
     LIVE_DATA_VEHICLE_TIME_VALUE,
     LIVE_DATA_SPEED_VALUE,
     MENU_FILE_AUTOSAVE_BUFFERS,
+    MENU_FILE_LOAD_LAP,
     MENU_IO_CONNECT_LORA,
     MENU_IO_DISCONNECT_LORA,
     MENU_FILE_DUMP_BUFFERS,
@@ -45,6 +56,7 @@ from dataflux.tags import (
     THEME_STATUS_CONNECTED_BRIGHT,
     THEME_STATUS_DISCONNECTED,
     WINDOW_FILE_DIALOG_AUTOSAVE_BUFFERS,
+    WINDOW_FILE_DIALOG_LOAD_LAP,
     WINDOW_LORA_CONNECTION_MENU,
     WINDOW_LORA_CONNECTION_MENU_COMBO,
     WINDOW_FILE_DIALOG_DUMP_BUFFERS,
@@ -84,6 +96,12 @@ def build_windows(state: AppState) -> None:
                     tag=MENU_FILE_AUTOSAVE_BUFFERS,
                     callback=dataflux.callbacks.menu.menu_file_autosave_buffers,
                     user_data=state,
+                )
+                dpg.add_menu_item(
+                    label="Load Lap",
+                    enabled=True,
+                    tag=MENU_FILE_LOAD_LAP,
+                    callback=dataflux.callbacks.menu.menu_file_load_lap,
                 )
                 dpg.add_menu_item(
                     label="Quit", callback=dataflux.callbacks.menu.menu_file_quit
@@ -300,6 +318,53 @@ def build_windows(state: AppState) -> None:
                 dpg.add_text("Lap Recap")
                 dpg.add_separator()
 
+                with dpg.plot(label="Speed", height=250, width=-1, no_inputs=True):
+                    dpg.add_plot_legend()
+                    dpg.add_plot_axis(
+                        dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_SPEED_LR
+                    )
+                    y_axis_speed = dpg.add_plot_axis(
+                        dpg.mvYAxis, label="Speed", tag=GRAPH_Y_AXIS_SPEED_LR
+                    )
+                    dpg.set_axis_limits(GRAPH_Y_AXIS_SPEED_LR, ymin=0, ymax=50)
+                    dpg.set_axis_limits(GRAPH_X_AXIS_SPEED_LR, ymin=-30, ymax=0)
+                    dpg.add_line_series(
+                        [], [], parent=y_axis_speed, tag=GRAPH_SERIES_SPEED_LR
+                    )
+                with dpg.plot(
+                    label="Battery Voltage",
+                    height=250,
+                    width=-1,
+                    no_inputs=True,
+                ):
+                    dpg.add_plot_legend()
+                    dpg.add_plot_axis(
+                        dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_VBAT_LR
+                    )
+                    y_axis_vbat = dpg.add_plot_axis(
+                        dpg.mvYAxis, label="Voltage", tag=GRAPH_Y_AXIS_VBAT_LR
+                    )
+                    dpg.set_axis_limits(GRAPH_Y_AXIS_VBAT_LR, ymin=0, ymax=20)
+                    dpg.set_axis_limits(GRAPH_X_AXIS_VBAT_LR, ymin=-30, ymax=0)
+                    dpg.add_line_series(
+                        [], [], parent=y_axis_vbat, tag=GRAPH_SERIES_VBAT_LR
+                    )
+                with dpg.plot(
+                    label="Engine Temp", height=250, width=-1, no_inputs=True
+                ):
+                    dpg.add_plot_legend()
+                    dpg.add_plot_axis(
+                        dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_TENG_LR
+                    )
+                    y_axis_teng = dpg.add_plot_axis(
+                        dpg.mvYAxis, label="Temperature", tag=GRAPH_Y_AXIS_TENG_LR
+                    )
+                    dpg.set_axis_limits(GRAPH_Y_AXIS_TENG_LR, ymin=0, ymax=120)
+                    dpg.set_axis_limits(GRAPH_X_AXIS_TENG_LR, ymin=-30, ymax=0)
+                    dpg.add_line_series(
+                        [], [], parent=y_axis_teng, tag=GRAPH_SERIES_TENG_LR
+                    )
+
             with dpg.group(tag=PAGE_SERIAL_CONSOLE, show=False):
                 with dpg.child_window(
                     tag=CHILD_WINDOW_SERIAL_CONSOLE,
@@ -452,3 +517,15 @@ def build_windows(state: AppState) -> None:
         user_data=state,
     ):
         pass
+
+    with dpg.file_dialog(
+        directory_selector=False,
+        show=False,
+        tag=WINDOW_FILE_DIALOG_LOAD_LAP,
+        width=700,
+        height=400,
+        modal=True,
+        callback=dataflux.callbacks.menu.window_file_dialog_load_lap_ok,
+        user_data=state,
+    ):
+        dpg.add_file_extension(".csv")

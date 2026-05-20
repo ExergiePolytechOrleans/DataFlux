@@ -2,6 +2,7 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from ast import arg
 from threading import Thread
 import dearpygui.dearpygui as dpg
 from dataflux.state import AppState
@@ -16,6 +17,7 @@ from dataflux.tags import (
     GRAPH_X_AXIS_TENG,
     GRAPH_X_AXIS_VBAT,
     WINDOW_FILE_DIALOG_AUTOSAVE_BUFFERS,
+    WINDOW_FILE_DIALOG_LOAD_LAP,
     WINDOW_LORA_CONNECTION_MENU,
     WINDOW_FILE_DIALOG_DUMP_BUFFERS,
     WINDOW_SERIAL_CONNECTION_MENU,
@@ -28,11 +30,8 @@ def open_lora_connection_window(sender, app_data, user_data: AppState) -> None:
 
 
 def open_serial_connection_window(sender, app_data, user_data: AppState) -> None:
-    print("Handling serial window open callback")
     dataflux.ui.routines.windows.update_window_serial_connection_menu_combo(user_data)
-    print("Combo updated")
     dpg.show_item(WINDOW_SERIAL_CONNECTION_MENU)
-    print("Window shown")
 
 
 def menu_io_disconnect_lora(sender, app_data, user_data: AppState) -> None:
@@ -47,6 +46,10 @@ def menu_io_disconnect_serial(sender, app_data, user_data: AppState) -> None:
 
 def menu_file_dump_buffers(sender, app_data, user_data: AppState) -> None:
     dpg.show_item(WINDOW_FILE_DIALOG_DUMP_BUFFERS)
+
+
+def menu_file_load_lap(sender, app_data, user_data: AppState) -> None:
+    dpg.show_item(WINDOW_FILE_DIALOG_LOAD_LAP)
 
 
 def menu_file_quit(sender, app_data, user_data) -> None:
@@ -80,6 +83,15 @@ def window_file_dialog_autosave_buffers_ok(
         daemon=True,
     )
     user_data.autosave_buffer_thread.start()
+
+
+def window_file_dialog_load_lap_ok(sender, app_data, user_data: AppState) -> None:
+    user_data.lap_loader_thread = Thread(
+        target=dataflux.services.telemetry.lap_load_worker,
+        args=(user_data, app_data["file_path_name"]),
+        daemon=True,
+    )
+    user_data.lap_loader_thread.start()
 
 
 def menu_window_select(sender, app_data, user_data: str) -> None:

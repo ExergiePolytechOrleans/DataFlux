@@ -12,13 +12,20 @@ import serial.tools.list_ports
 from dataflux.state import AppState
 from dataflux.tags import (
     GRAPH_SERIES_SPEED,
+    GRAPH_SERIES_SPEED_LR,
     GRAPH_SERIES_TENG,
+    GRAPH_SERIES_TENG_LR,
     GRAPH_SERIES_VBAT,
+    GRAPH_SERIES_VBAT_LR,
+    GRAPH_X_AXIS_SPEED_LR,
+    GRAPH_X_AXIS_TENG_LR,
+    GRAPH_X_AXIS_VBAT_LR,
     LIVE_DATA_TENG_VALUE,
     LIVE_DATA_UTC_TIME_VALUE,
     LIVE_DATA_VBAT_VALUE,
     LIVE_DATA_VEHICLE_TIME_VALUE,
     LIVE_DATA_SPEED_VALUE,
+    MENU_FILE_AUTOSAVE_BUFFERS,
 )
 from dataflux.ui.routines.serial import append_text_to_console
 
@@ -37,10 +44,11 @@ def ui_worker(state: AppState):
     last_teng: str = ""
     no_data_written = False
     while state.running:
-        # if state.autosave_enabled:
-        #     dpg.set_value(MENU_FILE_AUTOSAVE_BUFFERS, True)
-        # else:
-        #     dpg.set_value(MENU_FILE_AUTOSAVE_BUFFERS, False)
+        if state.autosave_enabled:
+            dpg.set_value(MENU_FILE_AUTOSAVE_BUFFERS, True)
+        else:
+            dpg.set_value(MENU_FILE_AUTOSAVE_BUFFERS, False)
+
         now = datetime.now(timezone.utc)
         formatted = now.strftime("%H:%M:%S")
 
@@ -55,6 +63,33 @@ def ui_worker(state: AppState):
                 pass
             else:
                 append_text_to_console(text)
+
+        if state.lap_recap_updated:
+            state.lap_recap_updated = False
+            timestamps = state.lap_recap_buffers.timestamp
+
+            if timestamps:
+                t0 = timestamps[0]
+                x_common = [(t - t0) / 100.0 for t in timestamps]
+            else:
+                x_common = []
+            dpg.set_value(
+                GRAPH_SERIES_SPEED_LR,
+                [x_common, state.lap_recap_buffers.speed],
+            )
+            dpg.set_value(
+                GRAPH_SERIES_VBAT_LR,
+                [x_common, state.lap_recap_buffers.vbat],
+            )
+            dpg.set_value(
+                GRAPH_SERIES_TENG_LR,
+                [x_common, state.lap_recap_buffers.teng],
+            )
+            axis_min = x_common[0]
+            axis_max = x_common[-1]
+            dpg.set_axis_limits(GRAPH_X_AXIS_SPEED_LR, ymin=axis_min, ymax=axis_max)
+            dpg.set_axis_limits(GRAPH_X_AXIS_VBAT_LR, ymin=axis_min, ymax=axis_max)
+            dpg.set_axis_limits(GRAPH_X_AXIS_TENG_LR, ymin=axis_min, ymax=axis_max)
 
         if state.lora_thread_running and state.telemetry_valid:
             x_common: list[float] | None = None

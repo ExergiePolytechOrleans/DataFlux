@@ -8,12 +8,14 @@ MENU_IO_DISCONNECT_LORA: str = "menu_io_disconnect_lora"
 MENU_IO_DISCONNECT_SERIAL: str = "menu_io_disconnect_serial"
 MENU_FILE_DUMP_BUFFERS: str = "menu_file_dump_buffers"
 MENU_FILE_AUTOSAVE_BUFFERS: str = "menu_file_autosave_buffers"
+MENU_FILE_LOAD_LAP: str = "menu_file_load_lap"
 WINDOW_LORA_CONNECTION_MENU: str = "window_lora_connection_menu"
 WINDOW_SERIAL_CONNECTION_MENU: str = "window_serial_connection_menu"
 WINDOW_LORA_CONNECTION_MENU_COMBO: str = "window_lora_connection_menu_combo"
 WINDOW_SERIAL_CONNECTION_MENU_COMBO: str = "window_serial_connection_menu_combo"
 WINDOW_FILE_DIALOG_DUMP_BUFFERS: str = "window_file_dialog_dump_buffers"
 WINDOW_FILE_DIALOG_AUTOSAVE_BUFFERS: str = "window_file_dialog_autosave_buffers"
+WINDOW_FILE_DIALOG_LOAD_LAP: str = "window_file_dialog_load_lap"
 
 CHILD_WINDOW_SERIAL_CONSOLE: str = "child_window_serial_console"
 
@@ -49,10 +51,22 @@ GRAPH_X_AXIS_SPEED: str = "graph_x_axis_speed"
 GRAPH_Y_AXIS_SPEED: str = "graph_y_axis_speed"
 GRAPH_SERIES_SPEED: str = "graph_series_speed"
 
+GRAPH_X_AXIS_SPEED_LR: str = "graph_x_axis_speed_lr"
+GRAPH_Y_AXIS_SPEED_LR: str = "graph_y_axis_speed_lr"
+GRAPH_SERIES_SPEED_LR: str = "graph_series_speed_lr"
+
 GRAPH_X_AXIS_VBAT: str = "graph_x_axis_vbat"
 GRAPH_Y_AXIS_VBAT: str = "graph_y_axis_vbat"
 GRAPH_SERIES_VBAT: str = "graph_series_vbat"
 
+GRAPH_X_AXIS_VBAT_LR: str = "graph_x_axis_vbat_lr"
+GRAPH_Y_AXIS_VBAT_LR: str = "graph_y_axis_vbat_lr"
+GRAPH_SERIES_VBAT_LR: str = "graph_series_vbat_lr"
+
 GRAPH_X_AXIS_TENG: str = "graph_x_axis_teng"
 GRAPH_Y_AXIS_TENG: str = "graph_y_axis_teng"
 GRAPH_SERIES_TENG: str = "graph_series_teng"
+
+GRAPH_X_AXIS_TENG_LR: str = "graph_x_axis_teng_lr"
+GRAPH_Y_AXIS_TENG_LR: str = "graph_y_axis_teng_lr"
+GRAPH_SERIES_TENG_LR: str = "graph_series_teng_lr"

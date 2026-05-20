@@ -68,6 +68,9 @@ class AppState:
     live_buffers_updated: bool = False
     live_buffer_len: int = 30
 
+    lap_recap_buffers: Buffers = field(default_factory=Buffers)
+    lap_recap_updated: bool = False
+
     lap_lock: Lock = field(default_factory=Lock)
     new_laps: Queue = field(default_factory=Queue)
     laps: list[LapInfo] = field(default_factory=list)
@@ -76,5 +79,7 @@ class AppState:
     autosave_buffer_thread: Thread | None = None
     autosave_enabled: bool = False
     autosave_path: Path | None = None
+
+    lap_loader_thread: Thread | None = None
 
     lock: Lock = field(default_factory=Lock)

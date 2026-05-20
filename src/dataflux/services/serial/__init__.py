@@ -72,14 +72,20 @@ def connect_serial(state: AppState, device: str) -> None:
 def disconnect_lora(state: AppState) -> None:
     if state.lora_port is not None:
         state.lora_thread_running = False
-        state.lora_port.close()
+        try:
+            state.lora_port.close()
+        except OSError:
+            pass
         state.lora_port = None
 
 
 def disconnect_serial(state: AppState) -> None:
     if state.serial_port is not None:
         state.serial_thread_running = False
-        state.serial_port.close()
+        try:
+            state.serial_port.close()
+        except OSError:
+            pass
         state.serial_port = None
 
 
@@ -105,7 +111,14 @@ def serial_worker(state: AppState) -> None:
         if port.port is not None and not os.path.exists(port.port):
             break
 
-        line = port.readline()
+        try:
+            line = port.readline()
+        except TypeError:
+            break
+        except serial.SerialException:
+            break
+        except OSError:
+            break
 
         if line:
             text = line.decode("utf-8", errors="replace")
@@ -155,8 +168,7 @@ def lora_reader_worker(state: AppState) -> None:
                 state.packet_queue.put(parsed)
                 state.lora_status_queue.put(0.1)
 
-        except Exception as e:
-            print(f"Serial parser error: {e}")
+        except Exception:
             break
     disconnect_lora(state)
     dataflux.ui.routines.update_global_connection_status(state)
