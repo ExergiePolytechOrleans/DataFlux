@@ -23,6 +23,17 @@ from dataflux.tags import (
 )
 
 
+def _file_dialog_path(app_data) -> str | None:
+    if not isinstance(app_data, dict):
+        return None
+
+    path = app_data.get("file_path_name")
+    if not path:
+        return None
+
+    return str(path)
+
+
 def open_lora_connection_window(sender, app_data, user_data: AppState) -> None:
     dataflux.ui.routines.windows.update_window_lora_connection_menu_combo(user_data)
     dpg.show_item(WINDOW_LORA_CONNECTION_MENU)
@@ -56,9 +67,18 @@ def menu_file_quit(sender, app_data, user_data) -> None:
 
 
 def window_file_dialog_dump_buffers_ok(sender, app_data, user_data: AppState) -> None:
+    path = _file_dialog_path(app_data)
+    if path is None:
+        print("No dump path selected")
+        return
+
+    if user_data.buffer_dump_thread is not None and user_data.buffer_dump_thread.is_alive():
+        print("Buffer dump is already running")
+        return
+
     user_data.buffer_dump_thread = Thread(
         target=dataflux.services.telemetry.buffer_dump,
-        args=(user_data, app_data["file_path_name"]),
+        args=(user_data, path),
         daemon=True,
     )
     user_data.buffer_dump_thread.start()
@@ -75,19 +95,33 @@ def menu_file_autosave_buffers(sender, app_state, user_data: AppState) -> None:
 def window_file_dialog_autosave_buffers_ok(
     sender, app_data, user_data: AppState
 ) -> None:
+    path = _file_dialog_path(app_data)
+    if path is None:
+        print("No autosave folder selected")
+        return
+
     user_data.autosave_enabled = True
     user_data.autosave_buffer_thread = Thread(
         target=dataflux.services.telemetry.autosave_worker,
-        args=(user_data, app_data["file_path_name"]),
+        args=(user_data, path),
         daemon=True,
     )
     user_data.autosave_buffer_thread.start()
 
 
 def window_file_dialog_load_lap_ok(sender, app_data, user_data: AppState) -> None:
+    path = _file_dialog_path(app_data)
+    if path is None:
+        print("No lap file selected")
+        return
+
+    if user_data.lap_loader_thread is not None and user_data.lap_loader_thread.is_alive():
+        print("Lap file loader is already running")
+        return
+
     user_data.lap_loader_thread = Thread(
         target=dataflux.services.telemetry.lap_load_worker,
-        args=(user_data, app_data["file_path_name"]),
+        args=(user_data, path),
         daemon=True,
     )
     user_data.lap_loader_thread.start()

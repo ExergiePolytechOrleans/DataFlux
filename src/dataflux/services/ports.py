@@ -13,6 +13,8 @@ def list_serial_ports(state: AppState) -> list[str]:
     valid_ports: list[str] = []
 
     for port in state.ports:
+        if port is None:
+            continue
         if port.vid is not None and port.pid is not None:
             valid_ports.append(port.device)
 
@@ -21,5 +23,9 @@ def list_serial_ports(state: AppState) -> list[str]:
 
 def ports_worker(state: AppState) -> None:
     while state.ports_thread_running:
-        state.ports = serial.tools.list_ports.comports()
+        try:
+            state.ports = serial.tools.list_ports.comports()
+        except (OSError, serial.SerialException) as exc:
+            print(f"Could not list serial ports: {exc}")
+            state.ports = []
         time.sleep(5)

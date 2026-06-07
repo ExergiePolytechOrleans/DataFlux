@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from threading import Thread
+import struct
 
 from serial import Serial
 import serial
@@ -11,19 +12,29 @@ import dataflux.telemetry_common.telemetry_common
 from dataflux.state import AppState
 
 
-def connect_lora(state: AppState, device: str) -> bool:
+def _close_lora_port(state: AppState) -> None:
+    if state.lora_port is None:
+        return
+
+    try:
+        state.lora_port.close()
+    except (OSError, serial.SerialException) as exc:
+        print(f"Could not close LoRa port: {exc}")
+    finally:
+        state.lora_port = None
+
+
+def connect_lora(state: AppState, device: str | None) -> bool:
     if not device:
         print("No LoRa port selected")
         state.connection_status_dirty = True
         return False
 
-    if state.lora_port is not None:
-        state.lora_port.close()
-        state.lora_port = None
+    _close_lora_port(state)
 
     try:
-        state.lora_port = Serial(port=device, baudrate=115200)
-    except serial.SerialException as exc:
+        state.lora_port = Serial(port=device, baudrate=115200, timeout=0.1)
+    except (OSError, serial.SerialException, ValueError) as exc:
         print(f"Could not open LoRa port {device!r}: {exc}")
         state.lora_port = None
         state.lora_thread_running = False
@@ -43,11 +54,7 @@ def disconnect_lora(state: AppState) -> None:
         return
 
     state.lora_thread_running = False
-    try:
-        state.lora_port.close()
-    except OSError:
-        pass
-    state.lora_port = None
+    _close_lora_port(state)
     state.connection_status_dirty = True
 
 
@@ -70,13 +77,20 @@ def lora_reader_worker(state: AppState) -> None:
                 state.packet_queue.put(parsed)
                 state.lora_status_queue.put(0.1)
 
-        except Exception:
+        except (OSError, serial.SerialException) as exc:
+            print(f"LoRa read failed: {exc}")
+            break
+        except Exception as exc:
+            print(f"LoRa worker ignored malformed packet: {exc}")
             break
 
     disconnect_lora(state)
 
 
 def read_one_uart_packet(port: Serial) -> bytes | None:
+    if port is None or port.closed:
+        return None
+
     first = port.read(1)
     if not first:
         return None
@@ -109,9 +123,14 @@ def parse_uart_packet(body: bytes) -> dict | None:
     if len(body) < telemetry_common.LORA_HEADER_SIZE:
         return None
 
-    lora = telemetry_common.unpack_lora_header(
-        body[: telemetry_common.LORA_HEADER_SIZE]
-    )
+    try:
+        lora = telemetry_common.unpack_lora_header(
+            body[: telemetry_common.LORA_HEADER_SIZE]
+        )
+    except (ValueError, TypeError, IndexError, struct.error) as exc:
+        print(f"Invalid LoRa header: {exc}")
+        return None
+
     payload = body[telemetry_common.LORA_HEADER_SIZE :]
 
     if lora.size != len(payload):
@@ -133,7 +152,11 @@ def parse_uart_packet(body: bytes) -> dict | None:
     }
 
     if lora.version == 1:
-        pkt = telemetry_common.unpack_packet1(payload)
+        try:
+            pkt = telemetry_common.unpack_packet1(payload)
+        except (ValueError, TypeError, IndexError, struct.error) as exc:
+            print(f"Invalid packet1 payload: {exc}")
+            return None
         return {
             **base,
             "type": "packet1",
@@ -141,7 +164,11 @@ def parse_uart_packet(body: bytes) -> dict | None:
         }
 
     if lora.version == 2:
-        pkt = telemetry_common.unpack_packet2(payload)
+        try:
+            pkt = telemetry_common.unpack_packet2(payload)
+        except (ValueError, TypeError, IndexError, struct.error) as exc:
+            print(f"Invalid packet2 payload: {exc}")
+            return None
         return {
             **base,
             "type": "packet2",
@@ -154,7 +181,11 @@ def parse_uart_packet(body: bytes) -> dict | None:
         }
 
     if lora.version == 3:
-        pkt = telemetry_common.unpack_packet3(payload)
+        try:
+            pkt = telemetry_common.unpack_packet3(payload)
+        except (ValueError, TypeError, IndexError, struct.error) as exc:
+            print(f"Invalid packet3 payload: {exc}")
+            return None
         return {
             **base,
             "type": "packet3",

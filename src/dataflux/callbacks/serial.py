@@ -36,5 +36,16 @@ def connection_window_connect_serial(sender, app_data, user_data: AppState) -> N
 def serial_console_button_send(sender, app_data, user_data: AppState) -> None:
     text = dpg.get_value(INPUT_SERIAL_CONSOLE)
     dpg.set_value(INPUT_SERIAL_CONSOLE, "")
+    if text is None:
+        return
+
+    text = str(text)
+    if not text:
+        return
+
+    if user_data.serial_port is None or not user_data.serial_thread_running:
+        print("Serial console is not connected")
+        return
+
     user_data.serial_send_queue.put(text)
     print("Put into send queue: " + text)

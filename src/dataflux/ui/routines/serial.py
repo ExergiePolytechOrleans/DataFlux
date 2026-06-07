@@ -9,6 +9,8 @@ from dataflux.tags import CHILD_WINDOW_SERIAL_CONSOLE, TEXT_SERIAL_CONSOLE
 
 def append_text_to_console(text: str) -> None:
     old = dpg.get_value(TEXT_SERIAL_CONSOLE)
+    if old is None:
+        old = ""
     dpg.set_value(TEXT_SERIAL_CONSOLE, old + text)
 
     def scroll_to_bottom() -> None:

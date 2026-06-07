@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 import sys
 from threading import Thread
+import traceback
 import dearpygui.dearpygui as dpg
 
 from dataflux.state import AppState
@@ -48,56 +49,64 @@ def run() -> None:
         user_agent="DataFlux/0.1 contact:h3cx@h3cx.dev", cache_dir="./.cache"
     )
 
-    # Create application context and viewport
     dpg.create_context()
-    dpg.configure_app(manual_callback_management=True)
+    try:
+        dpg.configure_app(manual_callback_management=True)
 
-    dpg.create_viewport(title="DataFlux", width=600, height=600)
+        dpg.create_viewport(title="DataFlux", width=600, height=600)
 
-    # Add Inter font to registry and bind as main app font
-    with dpg.font_registry():
-        app_font = dpg.add_font(_asset_path("assets/fonts/Inter-Regular.ttf"), 18 * 2)
-        mono_font = dpg.add_font(
-            _asset_path("assets/fonts/JetBrainsMono-Regular.ttf"),
-            size=36,
-            label="mono_font",
+        with dpg.font_registry():
+            app_font = dpg.add_font(_asset_path("assets/fonts/Inter-Regular.ttf"), 18 * 2)
+            mono_font = dpg.add_font(
+                _asset_path("assets/fonts/JetBrainsMono-Regular.ttf"),
+                size=36,
+                label="mono_font",
+            )
+        dpg.bind_font(app_font)
+
+        dataflux.ui.windows.build_windows(state)
+
+        dpg.setup_dearpygui()
+        dpg.show_viewport()
+
+        vp_w = dpg.get_viewport_client_width()
+        vp_h = dpg.get_viewport_client_height()
+        dpg.configure_item("main_window", pos=(0, 0), width=vp_w, height=vp_h)
+        dpg.set_primary_window("main_window", True)
+        dpg.bind_item_font(TEXT_SERIAL_CONSOLE, mono_font)
+
+        state.telemetry_thread_running = True
+        state.telemetry_thread = Thread(
+            target=dataflux.services.telemetry.telemetry_worker,
+            args=(state,),
+            daemon=True,
         )
-    dpg.bind_font(app_font)
+        state.telemetry_thread.start()
 
-    dataflux.ui.windows.build_windows(state)
+        state.ports_thread_running = True
+        state.ports_thread = Thread(
+            target=dataflux.services.ports.ports_worker, args=(state,), daemon=True
+        )
+        state.ports_thread.start()
 
-    dpg.setup_dearpygui()
-    dpg.show_viewport()
+        ui_updater = dataflux.ui.worker.UiFrameUpdater()
+        while dpg.is_dearpygui_running():
+            jobs = dpg.get_callback_queue()
+            try:
+                dpg.run_callbacks(jobs)
+                ui_updater.update(state)
+            except Exception:
+                traceback.print_exc()
+            dpg.render_dearpygui_frame()
+    finally:
+        state.running = False
+        state.telemetry_thread_running = False
+        state.ports_thread_running = False
+        state.lora_thread_running = False
+        state.serial_thread_running = False
 
-    vp_w = dpg.get_viewport_client_width()
-    vp_h = dpg.get_viewport_client_height()
-    dpg.configure_item("main_window", pos=(0, 0), width=vp_w, height=vp_h)
-    dpg.set_primary_window("main_window", True)
-    dpg.bind_item_font(TEXT_SERIAL_CONSOLE, mono_font)
-
-    state.telemetry_thread_running = True
-    state.telemetry_thread = Thread(
-        target=dataflux.services.telemetry.telemetry_worker, args=(state,), daemon=True
-    )
-    state.telemetry_thread.start()
-
-    state.ports_thread_running = True
-    state.ports_thread = Thread(
-        target=dataflux.services.ports.ports_worker, args=(state,), daemon=True
-    )
-    state.ports_thread.start()
-
-    ui_updater = dataflux.ui.worker.UiFrameUpdater()
-    while dpg.is_dearpygui_running():
-        jobs = dpg.get_callback_queue()
-        dpg.run_callbacks(jobs)
-        ui_updater.update(state)
-        dpg.render_dearpygui_frame()
-
-    state.running = False
-    state.telemetry_thread_running = False
-    state.ports_thread_running = False
-    state.lora_thread_running = False
-    state.serial_thread_running = False
-
-    dpg.destroy_context()
+        try:
+            dataflux.services.lora.disconnect_lora(state)
+            dataflux.services.serial_console.disconnect_serial(state)
+        finally:
+            dpg.destroy_context()

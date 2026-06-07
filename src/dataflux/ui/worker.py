@@ -50,14 +50,20 @@ class UiFrameUpdater:
         self.last_map_update = 0.0
 
     def update(self, state: AppState) -> None:
-        self._update_connection_status(state)
-        self._update_status_flashes(state)
-        self._update_autosave_menu(state)
-        self._update_utc_time()
-        self._drain_serial_console(state)
-        self._update_lap_recap(state)
-        self._update_live_telemetry(state)
-        self._update_live_map(state)
+        for updater in (
+            self._update_connection_status,
+            self._update_status_flashes,
+            self._update_autosave_menu,
+            self._update_utc_time,
+            self._drain_serial_console,
+            self._update_lap_recap,
+            self._update_live_telemetry,
+            self._update_live_map,
+        ):
+            try:
+                updater(state)
+            except Exception as exc:
+                print(f"UI update failed in {updater.__name__}: {exc}")
 
     def _update_connection_status(self, state: AppState) -> None:
         if not state.connection_status_dirty:
@@ -98,19 +104,25 @@ class UiFrameUpdater:
     def _drain_flash_queue(
         self, queue, tag: str, flash_until: float, now: float
     ) -> float:
+        if queue is None:
+            return flash_until
+
         while True:
             try:
                 duration = queue.get_nowait()
             except Empty:
                 return flash_until
 
-            flash_until = max(flash_until, now + duration)
+            try:
+                flash_until = max(flash_until, now + float(duration))
+            except (TypeError, ValueError):
+                continue
             dpg.bind_item_theme(tag, THEME_STATUS_CONNECTED_BRIGHT)
 
     def _update_autosave_menu(self, state: AppState) -> None:
         dpg.set_value(MENU_FILE_AUTOSAVE_BUFFERS, state.autosave_enabled)
 
-    def _update_utc_time(self) -> None:
+    def _update_utc_time(self, state: AppState | None = None) -> None:
         formatted = datetime.now(timezone.utc).strftime("%H:%M:%S")
 
         if formatted != self.last_datetime:
@@ -118,13 +130,17 @@ class UiFrameUpdater:
             self.last_datetime = formatted
 
     def _drain_serial_console(self, state: AppState) -> None:
+        if state.serial_data_queue is None:
+            return
+
         while True:
             try:
                 text = state.serial_data_queue.get_nowait()
             except Empty:
                 break
 
-            append_text_to_console(text)
+            if text is not None:
+                append_text_to_console(str(text))
 
     def _update_lap_recap(self, state: AppState) -> None:
         if not state.lap_recap_updated:
@@ -164,10 +180,16 @@ class UiFrameUpdater:
 
         with state.lock:
             self.no_data_written = False
-            veh_time = state.latest_telemetry["time_stamp"]
-            veh_speed = state.latest_telemetry["speed"]
-            vbat = state.latest_telemetry["vbat"]
-            teng = state.latest_telemetry["teng"]
+            try:
+                veh_time = int(state.latest_telemetry["time_stamp"])
+                veh_speed = float(state.latest_telemetry["speed"])
+                vbat = float(state.latest_telemetry["vbat"])
+                teng = float(state.latest_telemetry["teng"])
+            except (KeyError, TypeError, ValueError):
+                state.telemetry_valid = False
+                self._write_no_data()
+                return
+
             if state.live_buffers_updated:
                 x_common = list(state.live_buffers.timestamp)
                 speed_y = list(state.live_buffers.speed)
@@ -222,24 +244,33 @@ class UiFrameUpdater:
             with state.lock:
                 try:
                     lat = float(state.latest_telemetry.get("lat", DEFAULT_LAT))
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     lat = DEFAULT_LAT
 
                 try:
                     lon = float(state.latest_telemetry.get("lng", DEFAULT_LNG))
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     lon = DEFAULT_LNG
-            dpgm.set_center(lat=lat, lon=lon, map_tag="live_map")
+            try:
+                dpgm.set_center(lat=lat, lon=lon, map_tag="live_map")
+            except Exception as exc:
+                print(f"Could not recenter map: {exc}")
             state.live_map_pending_recenter = False
 
         if state.live_map_pending_zoom_in:
-            zl: int = dpgm.get_zoom(map_tag="live_map")
-            dpgm.set_zoom(zoom=zl + 1, map_tag="live_map")
+            try:
+                zl: int = dpgm.get_zoom(map_tag="live_map")
+                dpgm.set_zoom(zoom=zl + 1, map_tag="live_map")
+            except Exception as exc:
+                print(f"Could not zoom map in: {exc}")
             state.live_map_pending_zoom_in = False
 
         if state.live_map_pending_zoom_out:
-            zl: int = dpgm.get_zoom(map_tag="live_map")
-            dpgm.set_zoom(zoom=zl - 1, map_tag="live_map")
+            try:
+                zl: int = dpgm.get_zoom(map_tag="live_map")
+                dpgm.set_zoom(zoom=zl - 1, map_tag="live_map")
+            except Exception as exc:
+                print(f"Could not zoom map out: {exc}")
             state.live_map_pending_zoom_out = False
 
         if now - self.last_map_update < 0.1:
@@ -249,8 +280,15 @@ class UiFrameUpdater:
             return
 
         with state.lock:
-            lat: float = state.latest_telemetry["lat"]
-            lon: float = state.latest_telemetry["lng"]
+            try:
+                lat = float(state.latest_telemetry["lat"])
+                lon = float(state.latest_telemetry["lng"])
+            except (KeyError, TypeError, ValueError):
+                return
 
-        dpgm.update_marker("vehicle", lat=lat, lon=lon, map_tag="live_map")
+        try:
+            dpgm.update_marker("vehicle", lat=lat, lon=lon, map_tag="live_map")
+        except Exception as exc:
+            print(f"Could not update map marker: {exc}")
+            return
         self.last_map_update = now

@@ -5,8 +5,6 @@
 from bisect import bisect_left
 from datetime import datetime, timezone
 from queue import Empty
-import stat
-from tracemalloc import start
 from dataflux.state import AppState, Buffers, LapInfo
 import time
 from pathlib import Path
@@ -52,22 +50,47 @@ def telemetry_worker(state: AppState):
         except Empty:
             continue
 
+        if not isinstance(dataframe, dict):
+            print(f"Ignoring telemetry packet with unexpected type: {type(dataframe)}")
+            continue
+
+        packet_type = dataframe.get("type")
         now = datetime.now(timezone.utc)
         time_stamp = datetime_to_cs(now)
-        if (
-            dataframe["type"] == "packet2"
-            and abs(dataframe["time_stamp"] - time_stamp) <= 60 * 100
-        ):
-            state.latest_telemetry = dataframe
+
+        if packet_type == "packet2":
+            try:
+                packet_time = int(dataframe["time_stamp"])
+                speed = float(dataframe["speed"])
+                vbat = float(dataframe["vbat"])
+                teng = float(dataframe["teng"])
+                lat = float(dataframe["lat"])
+                lng = float(dataframe["lng"])
+            except (KeyError, TypeError, ValueError) as exc:
+                print(f"Ignoring malformed telemetry packet2: {exc}")
+                continue
+
+            if abs(packet_time - time_stamp) > 60 * 100:
+                continue
+
+            state.latest_telemetry = {
+                **dataframe,
+                "time_stamp": packet_time,
+                "speed": speed,
+                "vbat": vbat,
+                "teng": teng,
+                "lat": lat,
+                "lng": lng,
+            }
             state.telemetry_valid = True
 
             with state.lock:
-                state.raw_buffers.timestamp.append(dataframe["time_stamp"])
-                state.raw_buffers.speed.append(dataframe["speed"])
-                state.raw_buffers.vbat.append(dataframe["vbat"])
-                state.raw_buffers.teng.append(dataframe["teng"])
-                state.raw_buffers.lat.append(dataframe["lat"])
-                state.raw_buffers.lng.append(dataframe["lng"])
+                state.raw_buffers.timestamp.append(packet_time)
+                state.raw_buffers.speed.append(speed)
+                state.raw_buffers.vbat.append(vbat)
+                state.raw_buffers.teng.append(teng)
+                state.raw_buffers.lat.append(lat)
+                state.raw_buffers.lng.append(lng)
 
                 state.live_buffers_updated = True
                 state.live_buffers.timestamp.clear()
@@ -103,30 +126,48 @@ def telemetry_worker(state: AppState):
                 state.live_buffers.teng.reverse()
                 state.live_buffers.lat.reverse()
                 state.live_buffers.lng.reverse()
-        elif dataframe["type"] == "packet3":
-            start_time: int = dataframe["start_time"]
-            end_time: int = dataframe["duration"] + start_time
-            lap_count = dataframe["count"]
+        elif packet_type == "packet3":
+            try:
+                start_time = int(dataframe["start_time"])
+                end_time = int(dataframe["duration"]) + start_time
+                lap_count = int(dataframe["count"])
+            except (KeyError, TypeError, ValueError) as exc:
+                print(f"Ignoring malformed telemetry packet3: {exc}")
+                continue
+
             lap: LapInfo = LapInfo(start_time, end_time, lap_count)
             state.laps.append(lap)
             state.new_laps.put(lap)
 
 
 def save_lap(state: AppState, start_time: int, end_time: int, count: int) -> None:
-    time_str = cs_to_datetime(datetime.now(timezone.utc), start_time).strftime(
-        "%m_%d_%Y_%H_%M"
-    )
+    if state.autosave_path is None:
+        print("Cannot save lap without an autosave path")
+        return
+
+    try:
+        time_str = cs_to_datetime(datetime.now(timezone.utc), start_time).strftime(
+            "%m_%d_%Y_%H_%M"
+        )
+    except ValueError:
+        time_str = datetime.now(timezone.utc).strftime("%m_%d_%Y_%H_%M")
+
     save_path = Path(state.autosave_path) / f"{time_str}_lap_{count}.csv"
     data: Buffers = isolate_lap(state, start_time, end_time)
-    with save_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
 
-        writer.writerow(["timestamp", "speed", "vbat", "teng", "lat", "lng"])
+    try:
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        with save_path.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
 
-        for row in zip(
-            data.timestamp, data.speed, data.vbat, data.teng, data.lat, data.lng
-        ):
-            writer.writerow(row)
+            writer.writerow(["timestamp", "speed", "vbat", "teng", "lat", "lng"])
+
+            for row in zip(
+                data.timestamp, data.speed, data.vbat, data.teng, data.lat, data.lng
+            ):
+                writer.writerow(row)
+    except OSError as exc:
+        print(f"Could not save lap to {save_path}: {exc}")
 
 
 def buffer_dump(state: AppState, path: str) -> None:
@@ -144,20 +185,24 @@ def buffer_dump(state: AppState, path: str) -> None:
             lng=list(state.raw_buffers.lng),
         )
 
-    with save_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
+    try:
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        with save_path.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
 
-        writer.writerow(["timestamp", "speed", "vbat", "teng", "lat", "lng"])
+            writer.writerow(["timestamp", "speed", "vbat", "teng", "lat", "lng"])
 
-        for row in zip(
-            local_raw_buffers.timestamp,
-            local_raw_buffers.speed,
-            local_raw_buffers.vbat,
-            local_raw_buffers.teng,
-            local_raw_buffers.lat,
-            local_raw_buffers.lng,
-        ):
-            writer.writerow(row)
+            for row in zip(
+                local_raw_buffers.timestamp,
+                local_raw_buffers.speed,
+                local_raw_buffers.vbat,
+                local_raw_buffers.teng,
+                local_raw_buffers.lat,
+                local_raw_buffers.lng,
+            ):
+                writer.writerow(row)
+    except OSError as exc:
+        print(f"Could not dump buffers to {save_path}: {exc}")
 
     state.buffer_dump_thread = None
 
@@ -165,6 +210,14 @@ def buffer_dump(state: AppState, path: str) -> None:
 def autosave_worker(state: AppState, path: str) -> None:
     output_dir = Path(path)
     state.autosave_path = output_dir
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        print(f"Could not create autosave directory {output_dir}: {exc}")
+        state.autosave_enabled = False
+        state.autosave_buffer_thread = None
+        return
+
     ctr: int = 0
     while state.autosave_enabled:
         date_str = state.start_time.strftime("%m_%d_%Y_%H_%M")
@@ -182,6 +235,8 @@ def autosave_worker(state: AppState, path: str) -> None:
             save_lap(state, new_lap.start_time, new_lap.end_time, new_lap.count)
 
         time.sleep(30)
+
+    state.autosave_buffer_thread = None
 
 
 def lap_load_worker(state: AppState, path: str) -> None:
@@ -207,11 +262,11 @@ def lap_load_worker(state: AppState, path: str) -> None:
                 state.lap_recap_buffers.lng.append(float(row["lng"]))
 
     except FileNotFoundError:
-        pass
-    except KeyError:
-        pass
-    except ValueError:
-        pass
+        print(f"Lap file not found: {load_path}")
+    except (KeyError, ValueError) as exc:
+        print(f"Invalid lap file {load_path}: {exc}")
+    except OSError as exc:
+        print(f"Could not load lap file {load_path}: {exc}")
     else:
         state.lap_recap_updated = True
 
@@ -241,8 +296,13 @@ def closest_idx(values: list[int], target: int) -> int:
 
 def isolate_lap(state: AppState, start_time: int, end_time: int) -> Buffers:
     output: Buffers = Buffers()
+    if not state.raw_buffers.timestamp:
+        return output
+
     start_idx = closest_idx(state.raw_buffers.timestamp, start_time)
     end_idx = closest_idx(state.raw_buffers.timestamp, end_time)
+    if start_idx > end_idx:
+        start_idx, end_idx = end_idx, start_idx
 
     output.timestamp = state.raw_buffers.timestamp[start_idx : end_idx + 1]
     output.speed = state.raw_buffers.speed[start_idx : end_idx + 1]

@@ -12,21 +12,31 @@ import serial
 from dataflux.state import AppState
 
 
-def connect_serial(state: AppState, device: str) -> bool:
+def _close_serial_port(state: AppState) -> None:
+    if state.serial_port is None:
+        return
+
+    try:
+        state.serial_port.close()
+    except (OSError, serial.SerialException) as exc:
+        print(f"Could not close serial console port: {exc}")
+    finally:
+        state.serial_port = None
+
+
+def connect_serial(state: AppState, device: str | None) -> bool:
     if not device:
         print("No serial console port selected")
         state.connection_status_dirty = True
         return False
 
-    if state.serial_port is not None:
-        state.serial_port.close()
-        state.serial_port = None
+    _close_serial_port(state)
 
     try:
         state.serial_port = Serial(
             port=device, baudrate=115200, timeout=0.05, write_timeout=0.1
         )
-    except serial.SerialException as exc:
+    except (OSError, serial.SerialException, ValueError) as exc:
         print(f"Could not open serial console port {device!r}: {exc}")
         state.serial_port = None
         state.serial_thread_running = False
@@ -46,11 +56,7 @@ def disconnect_serial(state: AppState) -> None:
         return
 
     state.serial_thread_running = False
-    try:
-        state.serial_port.close()
-    except OSError:
-        pass
-    state.serial_port = None
+    _close_serial_port(state)
     state.connection_status_dirty = True
 
 
@@ -67,11 +73,8 @@ def serial_worker(state: AppState) -> None:
 
         try:
             line = port.readline()
-        except TypeError:
-            break
-        except serial.SerialException:
-            break
-        except OSError:
+        except (TypeError, OSError, serial.SerialException) as exc:
+            print(f"Serial console read failed: {exc}")
             break
 
         if line:
@@ -79,14 +82,31 @@ def serial_worker(state: AppState) -> None:
             state.serial_data_queue.put(text)
             state.serial_status_queue.put(0.05)
 
-        if port.writable():
-            try:
-                data: str = state.serial_send_queue.get_nowait()
-            except Empty:
-                pass
-            else:
-                state.serial_data_queue.put(data + "\n")
-                state.serial_status_queue.put(0.05)
-                port.write(data.encode("utf-8"))
+        try:
+            writable = port.writable()
+        except (OSError, serial.SerialException) as exc:
+            print(f"Serial console write check failed: {exc}")
+            break
+
+        if not writable:
+            continue
+
+        try:
+            data = state.serial_send_queue.get_nowait()
+        except Empty:
+            continue
+
+        if data is None:
+            continue
+
+        text_to_send = str(data)
+        try:
+            port.write(text_to_send.encode("utf-8"))
+        except (OSError, serial.SerialException, TypeError) as exc:
+            print(f"Serial console write failed: {exc}")
+            break
+
+        state.serial_data_queue.put(text_to_send + "\n")
+        state.serial_status_queue.put(0.05)
 
     disconnect_serial(state)

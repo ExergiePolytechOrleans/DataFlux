@@ -2,7 +2,6 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ast import arg
 import dearpygui.dearpygui as dpg
 import dpg_map as dpgm
 from dataflux.callbacks.map import (
