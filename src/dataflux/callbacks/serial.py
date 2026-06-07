@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import dearpygui.dearpygui as dpg
-import dataflux.services.serial
+import dataflux.services.lora
+import dataflux.services.serial_console
 import dataflux.ui.routines
 
 from dataflux.state import AppState
@@ -18,16 +19,18 @@ from dataflux.tags import (
 
 def connection_window_connect_lora(sender, app_data, user_data: AppState) -> None:
     device = dpg.get_value(WINDOW_LORA_CONNECTION_MENU_COMBO)
-    dataflux.services.serial.connect_lora(user_data, device)
+    connected = dataflux.services.lora.connect_lora(user_data, device)
     dataflux.ui.routines.update_global_connection_status(user_data)
-    dpg.hide_item(WINDOW_LORA_CONNECTION_MENU)
+    if connected:
+        dpg.hide_item(WINDOW_LORA_CONNECTION_MENU)
 
 
 def connection_window_connect_serial(sender, app_data, user_data: AppState) -> None:
     device = dpg.get_value(WINDOW_SERIAL_CONNECTION_MENU_COMBO)
-    dataflux.services.serial.connect_serial(user_data, device)
+    connected = dataflux.services.serial_console.connect_serial(user_data, device)
     dataflux.ui.routines.update_global_connection_status(user_data)
-    dpg.hide_item(WINDOW_SERIAL_CONNECTION_MENU)
+    if connected:
+        dpg.hide_item(WINDOW_SERIAL_CONNECTION_MENU)
 
 
 def serial_console_button_send(sender, app_data, user_data: AppState) -> None:

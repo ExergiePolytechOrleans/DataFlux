@@ -51,13 +51,11 @@ class AppState:
     telemetry_thread: Thread | None = None
     telemetry_thread_running: bool = False
 
-    lora_status_thread: Thread | None = None
     lora_status_queue: Queue = field(default_factory=Queue)
 
-    serial_status_thread: Thread | None = None
     serial_status_queue: Queue = field(default_factory=Queue)
 
-    ui_worker_thread: Thread | None = None
+    connection_status_dirty: bool = True
 
     packet_queue: Queue = field(default_factory=Queue)
     latest_telemetry: dict = field(default_factory=dict)
@@ -81,5 +79,9 @@ class AppState:
     autosave_path: Path | None = None
 
     lap_loader_thread: Thread | None = None
+
+    live_map_pending_recenter: bool = False
+    live_map_pending_zoom_in: bool = False
+    live_map_pending_zoom_out: bool = False
 
     lock: Lock = field(default_factory=Lock)

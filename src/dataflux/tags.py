@@ -70,3 +70,6 @@ GRAPH_SERIES_TENG: str = "graph_series_teng"
 GRAPH_X_AXIS_TENG_LR: str = "graph_x_axis_teng_lr"
 GRAPH_Y_AXIS_TENG_LR: str = "graph_y_axis_teng_lr"
 GRAPH_SERIES_TENG_LR: str = "graph_series_teng_lr"
+
+DEFAULT_LAT: float = 47.843834
+DEFAULT_LNG: float = 1.937727

@@ -2,8 +2,14 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from operator import call
+from ast import arg
 import dearpygui.dearpygui as dpg
+import dpg_map as dpgm
+from dataflux.callbacks.map import (
+    live_map_recenter,
+    live_map_zoom_in,
+    live_map_zoom_out,
+)
 import dataflux.callbacks.menu
 import dataflux.callbacks.serial
 
@@ -11,6 +17,8 @@ from dataflux.state import AppState
 from dataflux.tags import (
     BUTTON_SERIAL_CONSOLE_SEND,
     CHILD_WINDOW_SERIAL_CONSOLE,
+    DEFAULT_LAT,
+    DEFAULT_LNG,
     GRAPH_SERIES_SPEED,
     GRAPH_SERIES_SPEED_LR,
     GRAPH_SERIES_TENG,
@@ -305,13 +313,31 @@ def build_windows(state: AppState) -> None:
                         show=False,
                         no_scrollbar=True,
                     ):
-                        with dpg.drawlist(width=500, height=500, tag="map_drawlist"):
-                            dpg.draw_image("texture_tab", (0, 0), (500, 500))
-                            dpg.draw_circle(
-                                (0, 0),
-                                10,
-                                color=(255, 0, 0, 255),
-                                fill=(255, 0, 0, 255),
+                        with dpgm.map_widget(
+                            tag="live_map",
+                            center=(47.843834, 1.937727),
+                            zoom=15,
+                            width=-1,
+                            height=-36,
+                        ):
+                            dpgm.add_marker(
+                                "vehicle", lat=DEFAULT_LAT, lon=DEFAULT_LNG, show=True
+                            )
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(
+                                label="Recenter",
+                                callback=live_map_recenter,
+                                user_data=state,
+                            )
+                            dpg.add_button(
+                                label="Zoom In",
+                                callback=live_map_zoom_in,
+                                user_data=state,
+                            )
+                            dpg.add_button(
+                                label="Zoom Out",
+                                callback=live_map_zoom_out,
+                                user_data=state,
                             )
 
             with dpg.group(tag=PAGE_LAP_RECAP, show=False):

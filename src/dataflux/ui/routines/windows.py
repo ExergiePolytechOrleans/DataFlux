@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import dearpygui.dearpygui as dpg
 
-from dataflux.services.serial import list_serial_ports
+from dataflux.services.ports import list_serial_ports
 from dataflux.state import AppState
 from dataflux.tags import (
     PAGE_LAP_RECAP,

@@ -2,7 +2,6 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import dearpygui.dearpygui as dpg
 import dataflux.ui.routines.menu
 import dataflux.ui.routines.status
 

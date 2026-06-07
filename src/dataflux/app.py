@@ -9,8 +9,9 @@ from threading import Thread
 import dearpygui.dearpygui as dpg
 
 from dataflux.state import AppState
-import dataflux.config
+import dpg_map as dpgm
 from dataflux.tags import TEXT_SERIAL_CONSOLE
+import dataflux.services.ports
 import dataflux.ui.windows
 import dataflux.ui.worker
 import dataflux.services.telemetry
@@ -43,21 +44,13 @@ def run() -> None:
     state: AppState = AppState()
     state.start_time = datetime.now()
 
+    dpgm.configure(
+        user_agent="DataFlux/0.1 contact:h3cx@h3cx.dev", cache_dir="./.cache"
+    )
+
     # Create application context and viewport
     dpg.create_context()
-
-    map_path = _asset_path("assets/images/map.png")
-    map_image = dpg.load_image(map_path)
-    if map_image is None:
-        raise RuntimeError(f"Failed to load map image: {map_path}")
-    width, height, channels, data = map_image
-    dataflux.config.MAP_IMAGE_WIDTH = width
-    dataflux.config.MAP_IMAGE_HEIGHT = height
-
-    with dpg.texture_registry(show=False):
-        dpg.add_static_texture(
-            width=width, height=height, default_value=data, tag="texture_tab"
-        )
+    dpg.configure_app(manual_callback_management=True)
 
     dpg.create_viewport(title="DataFlux", width=600, height=600)
 
@@ -82,11 +75,6 @@ def run() -> None:
     dpg.set_primary_window("main_window", True)
     dpg.bind_item_font(TEXT_SERIAL_CONSOLE, mono_font)
 
-    state.ui_worker_thread = Thread(
-        target=dataflux.ui.worker.ui_worker, args=(state,), daemon=True
-    )
-    state.ui_worker_thread.start()
-
     state.telemetry_thread_running = True
     state.telemetry_thread = Thread(
         target=dataflux.services.telemetry.telemetry_worker, args=(state,), daemon=True
@@ -95,10 +83,21 @@ def run() -> None:
 
     state.ports_thread_running = True
     state.ports_thread = Thread(
-        target=dataflux.ui.worker.ports_worker, args=(state,), daemon=True
+        target=dataflux.services.ports.ports_worker, args=(state,), daemon=True
     )
     state.ports_thread.start()
 
-    dpg.start_dearpygui()
+    ui_updater = dataflux.ui.worker.UiFrameUpdater()
+    while dpg.is_dearpygui_running():
+        jobs = dpg.get_callback_queue()
+        dpg.run_callbacks(jobs)
+        ui_updater.update(state)
+        dpg.render_dearpygui_frame()
+
+    state.running = False
+    state.telemetry_thread_running = False
+    state.ports_thread_running = False
+    state.lora_thread_running = False
+    state.serial_thread_running = False
 
     dpg.destroy_context()

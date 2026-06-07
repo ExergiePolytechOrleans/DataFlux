@@ -2,14 +2,13 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ast import arg
 from threading import Thread
 import dearpygui.dearpygui as dpg
 from dataflux.state import AppState
 from dataflux.ui.routines import update_global_connection_status
 import dataflux.ui.routines.windows
-import dataflux.ui.routines.status
-import dataflux.services.serial
+import dataflux.services.lora
+import dataflux.services.serial_console
 import dataflux.services.telemetry
 
 from dataflux.tags import (
@@ -35,12 +34,12 @@ def open_serial_connection_window(sender, app_data, user_data: AppState) -> None
 
 
 def menu_io_disconnect_lora(sender, app_data, user_data: AppState) -> None:
-    dataflux.services.serial.disconnect_lora(user_data)
+    dataflux.services.lora.disconnect_lora(user_data)
     update_global_connection_status(user_data)
 
 
 def menu_io_disconnect_serial(sender, app_data, user_data: AppState) -> None:
-    dataflux.services.serial.disconnect_serial(user_data)
+    dataflux.services.serial_console.disconnect_serial(user_data)
     update_global_connection_status(user_data)
 
 
