@@ -340,55 +340,83 @@ def build_windows(state: AppState) -> None:
                             )
 
             with dpg.group(tag=PAGE_LAP_RECAP, show=False):
-                dpg.add_text("Lap Recap")
-                dpg.add_separator()
-
-                with dpg.plot(label="Speed", height=250, width=-1, no_inputs=True):
-                    dpg.add_plot_legend()
-                    dpg.add_plot_axis(
-                        dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_SPEED_LR
-                    )
-                    y_axis_speed = dpg.add_plot_axis(
-                        dpg.mvYAxis, label="Speed", tag=GRAPH_Y_AXIS_SPEED_LR
-                    )
-                    dpg.set_axis_limits(GRAPH_Y_AXIS_SPEED_LR, ymin=0, ymax=50)
-                    dpg.set_axis_limits(GRAPH_X_AXIS_SPEED_LR, ymin=-30, ymax=0)
-                    dpg.add_line_series(
-                        [], [], parent=y_axis_speed, tag=GRAPH_SERIES_SPEED_LR
-                    )
-                with dpg.plot(
-                    label="Battery Voltage",
-                    height=250,
-                    width=-1,
-                    no_inputs=True,
-                ):
-                    dpg.add_plot_legend()
-                    dpg.add_plot_axis(
-                        dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_VBAT_LR
-                    )
-                    y_axis_vbat = dpg.add_plot_axis(
-                        dpg.mvYAxis, label="Voltage", tag=GRAPH_Y_AXIS_VBAT_LR
-                    )
-                    dpg.set_axis_limits(GRAPH_Y_AXIS_VBAT_LR, ymin=0, ymax=20)
-                    dpg.set_axis_limits(GRAPH_X_AXIS_VBAT_LR, ymin=-30, ymax=0)
-                    dpg.add_line_series(
-                        [], [], parent=y_axis_vbat, tag=GRAPH_SERIES_VBAT_LR
-                    )
-                with dpg.plot(
-                    label="Engine Temp", height=250, width=-1, no_inputs=True
-                ):
-                    dpg.add_plot_legend()
-                    dpg.add_plot_axis(
-                        dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_TENG_LR
-                    )
-                    y_axis_teng = dpg.add_plot_axis(
-                        dpg.mvYAxis, label="Temperature", tag=GRAPH_Y_AXIS_TENG_LR
-                    )
-                    dpg.set_axis_limits(GRAPH_Y_AXIS_TENG_LR, ymin=0, ymax=120)
-                    dpg.set_axis_limits(GRAPH_X_AXIS_TENG_LR, ymin=-30, ymax=0)
-                    dpg.add_line_series(
-                        [], [], parent=y_axis_teng, tag=GRAPH_SERIES_TENG_LR
-                    )
+                with dpg.group(horizontal=True):
+                    with dpg.child_window(
+                        # tag=SUB_PAGE_MAP,
+                        width=1000,
+                        autosize_y=True,
+                        border=True,
+                        show=True,
+                        no_scrollbar=True,
+                    ):
+                        with dpg.plot(
+                            label="Speed", height=250, width=-1, no_inputs=True
+                        ):
+                            dpg.add_plot_legend()
+                            dpg.add_plot_axis(
+                                dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_SPEED_LR
+                            )
+                            y_axis_speed = dpg.add_plot_axis(
+                                dpg.mvYAxis, label="Speed", tag=GRAPH_Y_AXIS_SPEED_LR
+                            )
+                            dpg.set_axis_limits(GRAPH_Y_AXIS_SPEED_LR, ymin=0, ymax=50)
+                            dpg.set_axis_limits(GRAPH_X_AXIS_SPEED_LR, ymin=-30, ymax=0)
+                            dpg.add_line_series(
+                                [], [], parent=y_axis_speed, tag=GRAPH_SERIES_SPEED_LR
+                            )
+                        with dpg.plot(
+                            label="Battery Voltage",
+                            height=250,
+                            width=-1,
+                            no_inputs=True,
+                        ):
+                            dpg.add_plot_legend()
+                            dpg.add_plot_axis(
+                                dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_VBAT_LR
+                            )
+                            y_axis_vbat = dpg.add_plot_axis(
+                                dpg.mvYAxis, label="Voltage", tag=GRAPH_Y_AXIS_VBAT_LR
+                            )
+                            dpg.set_axis_limits(GRAPH_Y_AXIS_VBAT_LR, ymin=0, ymax=20)
+                            dpg.set_axis_limits(GRAPH_X_AXIS_VBAT_LR, ymin=-30, ymax=0)
+                            dpg.add_line_series(
+                                [], [], parent=y_axis_vbat, tag=GRAPH_SERIES_VBAT_LR
+                            )
+                        with dpg.plot(
+                            label="Engine Temp", height=250, width=-1, no_inputs=True
+                        ):
+                            dpg.add_plot_legend()
+                            dpg.add_plot_axis(
+                                dpg.mvXAxis, label="Time", tag=GRAPH_X_AXIS_TENG_LR
+                            )
+                            y_axis_teng = dpg.add_plot_axis(
+                                dpg.mvYAxis,
+                                label="Temperature",
+                                tag=GRAPH_Y_AXIS_TENG_LR,
+                            )
+                            dpg.set_axis_limits(GRAPH_Y_AXIS_TENG_LR, ymin=0, ymax=120)
+                            dpg.set_axis_limits(GRAPH_X_AXIS_TENG_LR, ymin=-30, ymax=0)
+                            dpg.add_line_series(
+                                [], [], parent=y_axis_teng, tag=GRAPH_SERIES_TENG_LR
+                            )
+                    with dpg.child_window(
+                        # tag=SUB_PAGE_MAP,
+                        autosize_x=True,
+                        autosize_y=True,
+                        border=True,
+                        show=True,
+                        no_scrollbar=True,
+                    ):
+                        with dpgm.map_widget(
+                            tag="recap_map",
+                            center=(47.843834, 1.937727),
+                            zoom=15,
+                            width=-1,
+                            height=-1,
+                        ):
+                            dpgm.add_trajectory(tag="recap_trajectory", show=False)
+                            # pass
+                        #     dpgm.add_trajectory("recap_trajectory")
 
             with dpg.group(tag=PAGE_SERIAL_CONSOLE, show=False):
                 with dpg.child_window(

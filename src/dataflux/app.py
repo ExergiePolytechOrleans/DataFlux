@@ -2,7 +2,7 @@
 # Copyright (C) 2026 Association Exergie <association.exergie@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import sys
 from threading import Thread
@@ -43,10 +43,12 @@ def _asset_path(relative_path: str) -> str:
 
 def run() -> None:
     state: AppState = AppState()
-    state.start_time = datetime.now()
+    state.start_time = datetime.now(timezone.utc)
 
     dpgm.configure(
-        user_agent="DataFlux/0.1 contact:h3cx@h3cx.dev", cache_dir="./.cache"
+        user_agent="DataFlux/0.1 contact:h3cx@h3cx.dev",
+        cache_dir="./.cache",
+        disk_cache_max_bytes=200_000_000,
     )
 
     dpg.create_context()
@@ -56,7 +58,9 @@ def run() -> None:
         dpg.create_viewport(title="DataFlux", width=600, height=600)
 
         with dpg.font_registry():
-            app_font = dpg.add_font(_asset_path("assets/fonts/Inter-Regular.ttf"), 18 * 2)
+            app_font = dpg.add_font(
+                _asset_path("assets/fonts/Inter-Regular.ttf"), 18 * 2
+            )
             mono_font = dpg.add_font(
                 _asset_path("assets/fonts/JetBrainsMono-Regular.ttf"),
                 size=36,
@@ -84,9 +88,7 @@ def run() -> None:
         state.telemetry_thread.start()
 
         state.ports_thread_running = True
-        state.ports_thread = Thread(
-            target=dataflux.services.ports.ports_worker, args=(state,), daemon=True
-        )
+        state.ports_thread = Thread()
         state.ports_thread.start()
 
         ui_updater = dataflux.ui.worker.UiFrameUpdater()

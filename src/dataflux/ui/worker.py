@@ -115,7 +115,7 @@ class UiFrameUpdater:
 
             try:
                 flash_until = max(flash_until, now + float(duration))
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 continue
             dpg.bind_item_theme(tag, THEME_STATUS_CONNECTED_BRIGHT)
 
@@ -167,6 +167,13 @@ class UiFrameUpdater:
         dpg.set_axis_limits(GRAPH_X_AXIS_SPEED_LR, ymin=axis_min, ymax=axis_max)
         dpg.set_axis_limits(GRAPH_X_AXIS_VBAT_LR, ymin=axis_min, ymax=axis_max)
         dpg.set_axis_limits(GRAPH_X_AXIS_TENG_LR, ymin=axis_min, ymax=axis_max)
+        dpgm.update_trajectory(
+            tag="recap_trajectory",
+            lats=state.lap_recap_buffers.lat,
+            lons=state.lap_recap_buffers.lng,
+            map_tag="recap_map",
+        )
+        dpgm.set_overlay_show(tag="recap_trajectory", show=True, map_tag="recap_map")
 
     def _update_live_telemetry(self, state: AppState) -> None:
         if not (state.lora_thread_running and state.telemetry_valid):
@@ -185,7 +192,7 @@ class UiFrameUpdater:
                 veh_speed = float(state.latest_telemetry["speed"])
                 vbat = float(state.latest_telemetry["vbat"])
                 teng = float(state.latest_telemetry["teng"])
-            except (KeyError, TypeError, ValueError):
+            except KeyError, TypeError, ValueError:
                 state.telemetry_valid = False
                 self._write_no_data()
                 return
@@ -244,12 +251,12 @@ class UiFrameUpdater:
             with state.lock:
                 try:
                     lat = float(state.latest_telemetry.get("lat", DEFAULT_LAT))
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     lat = DEFAULT_LAT
 
                 try:
                     lon = float(state.latest_telemetry.get("lng", DEFAULT_LNG))
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     lon = DEFAULT_LNG
             try:
                 dpgm.set_center(lat=lat, lon=lon, map_tag="live_map")
@@ -283,7 +290,7 @@ class UiFrameUpdater:
             try:
                 lat = float(state.latest_telemetry["lat"])
                 lon = float(state.latest_telemetry["lng"])
-            except (KeyError, TypeError, ValueError):
+            except KeyError, TypeError, ValueError:
                 return
 
         try:
